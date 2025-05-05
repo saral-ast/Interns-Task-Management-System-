@@ -16,9 +16,9 @@
                             </a>
                         </div>
 
-                        <form method="POST" action="{{ route('intern.tasks.update', $task) }}" class="mt-6 space-y-6">
-                            @csrf
-                            @method('PUT')
+                        {{-- <form method="POST" action="{{ route('intern.tasks.update', $task) }}" class="mt-6 space-y-6"> --}}
+                            {{-- @csrf --}}
+                            {{-- @method('PUT') --}}
                             <div class="space-y-4">
                                 <div>
                                     <label for="title" class="block font-medium text-base text-gray-700">Task Title</label>
@@ -32,7 +32,7 @@
 
                                 <div>
                                     <label for="status" class="block font-medium text-base text-gray-700">Status</label>
-                                    <select name="status" id="status" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>
+                                    <select name="status" id="status" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" disabled>
                                         <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="in_progress" {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
                                         <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
@@ -53,12 +53,12 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-6 mt-10">
+                            {{-- <div class="flex items-center gap-6 mt-10">
                                 <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                     Update Status
                                 </button>
-                            </div>
-                        </form>
+                            </div> --}}
+                        {{-- </form> --}}
                     </div>
                 </div>
             </div>

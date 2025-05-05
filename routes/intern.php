@@ -22,5 +22,7 @@ Route::prefix('intern')->group(function () {
        Route::get('/dashboard', [DashboardController::class, 'index'])->name('intern.dashboard');
         
         Route::get('/tasks', [TaskController::class, 'index'])->name('intern.tasks');
+        Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('intern.tasks.show');
+        // Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('intern.tasks.update');
     });
 });

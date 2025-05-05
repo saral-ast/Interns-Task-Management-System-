@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Intern;
 
 use App\Http\Controllers\Controller;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,4 +16,14 @@ class TaskController extends Controller
             'tasks' => $tasks
         ]);
     }
+
+    public function show(Task $task) {
+        // Ensure the task belongs to the authenticated user
+        if ($task->assigned_to !== Auth::guard('user')->id()) {
+            abort(403);
+        }
+        return view('intern.tasks.show', ['task' => $task]);
+    }
+
+
 }
