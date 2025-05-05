@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Middleware;use Closure;
+namespace App\Http\Middleware;
+
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +28,13 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect($this->redirectTo($request, $guards));
+                if ($guard === 'admin') {
+                    return redirect()->route('admin.dashboard');
+                }
+                if ($guard === 'user') {
+                    return redirect()->route('intern.dashboard');
+                }
+                
             }
         }
 
@@ -40,7 +48,7 @@ class RedirectIfAuthenticated
     {
         if(in_array('admin', $guards)){
             return route('admin.dashboard');
-        }else if(in_array('web', $guards)){
+        }else if(in_array('user', $guards)){
             return route('intern.dashboard');
         }
     }

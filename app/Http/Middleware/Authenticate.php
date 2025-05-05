@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Middleware;
+namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Auth\AuthenticationException;
@@ -28,6 +28,7 @@ class Authenticate implements AuthenticatesRequests
      * Create a new middleware instance.
      *
      * @param  \Illuminate\Contracts\Auth\Factory  $auth
+     * @return void
      */
     public function __construct(Auth $auth)
     {
@@ -101,7 +102,7 @@ class Authenticate implements AuthenticatesRequests
         throw new AuthenticationException(
             'Unauthenticated.',
             $guards,
-            $request->expectsJson() ? null : $this->redirectTo($request, $guards),
+            $request->expectsJson() ? null : $this->redirectTo($request,$guards),
         );
     }
 
@@ -111,13 +112,22 @@ class Authenticate implements AuthenticatesRequests
      * @param  \Illuminate\Http\Request  $request
      * @return string|null
      */
-    protected function redirectTo(Request $request, $guards)
+    protected function redirectTo(Request $request,$guards)
     {
-        if(in_array('admin', $guards)){
-            return route('admin.login');
-        }else if(in_array('web', $guards)){
-            return route('login');
+        //edit this line after creating routes for admin and customer
+        // dd($guards); 
+        if(in_array("user", $guards)) {
+            return route("intern.login");
+        } else if(in_array("admin", $guards)) {
+            // return route("admin.login");
+            //change it to uper
+            return route("admin.login");
         }
+
+
+        // if (static::$redirectToCallback) {
+        //     return call_user_func(static::$redirectToCallback, $request);
+        // }
     }
 
     /**
