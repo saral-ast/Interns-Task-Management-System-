@@ -36,7 +36,7 @@ class InternRegisterController extends Controller
             // Log the user in
             Auth::guard('user')->login($user);
             
-            return redirect()->route('intern.dashboard');
+            return redirect()->route('interns.dashboard');
         } catch (Exception $e) {
             return back()->withErrors(['email' => 'Registration failed. Please try again.'])->withInput($data);
         }

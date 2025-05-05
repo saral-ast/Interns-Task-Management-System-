@@ -20,10 +20,16 @@ class InternLoginController extends Controller
     public function login(InternLoginRequest $request){
         try {
              $credentials = $request->validated();
+            //  dd(Auth::guard('user')->attempt($credentials));
              if(Auth::guard('user')->attempt($credentials)){
-                  $user = auth()->user();
-                  return redirect()->route('intern.dashboard');
+                 
+                  $user = Auth::guard('user')->user();
+                //   dd($user);
+                  return redirect()->route('intern.dashboard',[
+                      'user' => $user
+                  ]);
              }
+             return redirect()->route('intern.login')->with('error','Invalid credentials');
         } catch (Exception $e) {
              throw $e;
         }

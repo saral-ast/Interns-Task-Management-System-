@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -51,9 +53,16 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
     
-    public function tasks() {
-        return $this->belongsToMany(Task::class);
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
     }
+
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
 
     public function isAdmin() {
         return $this->role === 'admin';

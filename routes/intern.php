@@ -1,7 +1,10 @@
 <?php
 
+
 use App\Http\Controllers\Auth\InternLoginController;
 use App\Http\Controllers\Auth\InternRegisterController;
+use App\Http\Controllers\Intern\DashboardController;
+use App\Http\Controllers\Intern\TaskController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -16,12 +19,8 @@ Route::prefix('intern')->group(function () {
 
     Route::middleware("auth:user")->group(function() {
         Route::post( '/logout',[InternLoginController::class,'logout'])->name('intern.logout');
-        Route::get('/', function() {
-            return redirect()->route('dashboard');
-        })->name('intern.dashboard');
+       Route::get('/dashboard', [DashboardController::class, 'index'])->name('intern.dashboard');
         
-        Route::get('/tasks', function() {
-            return view('intern.tasks.index');
-        })->name('intern.tasks');
+        Route::get('/tasks', [TaskController::class, 'index'])->name('intern.tasks');
     });
 });
