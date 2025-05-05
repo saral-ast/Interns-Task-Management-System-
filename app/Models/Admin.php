@@ -10,4 +10,10 @@ class Admin extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\AdminFactory> */
     use HasFactory;
+
+
+    public function role() {
+        
+        return $this->belongsTo(Role::class);
+    }
 }

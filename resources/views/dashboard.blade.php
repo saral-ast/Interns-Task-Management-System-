@@ -1,4 +1,4 @@
 <x-layout>
     <x-navigation />
-   <h1>Dashboard</h1>
+    
 </x-layout>
