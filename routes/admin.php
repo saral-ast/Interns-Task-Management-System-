@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminControllers;
+use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\UserController;
@@ -45,6 +46,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('admin.tasks.edit');
             Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('admin.tasks.update');
             Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('admin.tasks.destroy');
+            Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('admin.tasks.comments.store');
+            Route::delete('/tasks/{task}/comments/{comment}', [CommentController::class, 'destroy'])->name('admin.tasks.comments.destroy');
             
             // Route::get('/users/create', [])->name('admin.users.create');
         });

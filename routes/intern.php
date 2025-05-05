@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Auth\InternLoginController;
 use App\Http\Controllers\Auth\InternRegisterController;
+use App\Http\Controllers\Intern\CommentController;
 use App\Http\Controllers\Intern\DashboardController;
 use App\Http\Controllers\Intern\TaskController;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,8 @@ Route::prefix('intern')->group(function () {
         
         Route::get('/tasks', [TaskController::class, 'index'])->name('intern.tasks');
         Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('intern.tasks.show');
+        Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('intern.tasks.comments.store');
+        Route::delete('/tasks/{task}/comments/{comment}', [CommentController::class, 'destroy'])->name('intern.tasks.comments.destroy');
         // Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('intern.tasks.update');
     });
 });

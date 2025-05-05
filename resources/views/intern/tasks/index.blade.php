@@ -45,7 +45,7 @@
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                     <a href="{{ route('intern.tasks.show', $task) }}" class="text-blue-600 hover:text-blue-900 mr-3">View Details</a>
-                                                    <a href="#" class="text-green-600 hover:text-green-900">Add Comment</a>
+                                                    {{-- <a href="#" class="text-green-600 hover:text-green-900">Add Comment</a> --}}
                                                 </td>
                                             </tr>
                                         @endforeach

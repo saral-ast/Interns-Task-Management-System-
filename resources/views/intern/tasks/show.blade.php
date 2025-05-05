@@ -53,15 +53,103 @@
                                 </div>
                             </div>
 
-                            {{-- <div class="flex items-center gap-6 mt-10">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                    Update Status
-                                </button>
-                            </div> --}}
-                        {{-- </form> --}}
+                            <!-- Comments Section -->
+                            <div class="mt-10">
+                                <h2 class="text-lg font-medium text-gray-900 mb-4">Comments</h2>
+                                
+                                <!-- Add Comment Form -->
+                                <form action="{{ route('intern.tasks.comments.store', $task) }}" method="POST" class="mb-6">
+                                    @csrf
+                                    <div>
+                                        <label for="comment" class="sr-only">Add a comment</label>
+                                        <textarea name="comment" id="comment" rows="3" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" placeholder="Add your comment here..." required></textarea>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                            Post Comment
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Comments List -->
+                                <div class="space-y-4">
+                                    @forelse($task->comments as $comment)
+                                        <div id="comment-{{ $comment->id }}" class="bg-gray-50 rounded-lg p-4">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-grow">
+                                                    <p class="text-sm text-gray-600">{{ $comment->comment }}</p>
+                                                    <div class="mt-2 text-xs text-gray-500">
+                                                        <a href="#comment-{{ $comment->id }}" class="font-medium hover:text-indigo-600">{{ $comment->user->name }}</a>
+                                                        <span class="mx-1">•</span>
+                                                        <span>{{ $comment->created_at->diffForHumans() }}</span>
+                                                        <span class="mx-1">•</span>
+                                                        <span class="text-indigo-600">{{ ucfirst($comment->user_type) }}</span>
+                                                    </div>
+                                                </div>
+                                                @if($comment->user_type === 'intern' && $comment->user_id === Auth::guard('user')->id())
+                                                <button onclick="deleteComment({{ $task->id }}, {{ $comment->id }})" class="text-red-600 hover:text-red-800 ml-4">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <p class="text-gray-500 text-center py-4">No comments yet.</p>
+                                    @endforelse
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
     </x-navigation>
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            window.deleteComment = function(taskId, commentId) {
+                Swal.fire({
+                    title: 'Delete Comment',
+                    text: 'Are you sure you want to delete this comment? This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `/intern/tasks/${taskId}/comments/${commentId}`,
+                            type: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            success: function(data) {
+                                if (data.message) {
+                                    $(`#comment-${commentId}`).fadeOut(300, function() {
+                                        $(this).remove();
+                                    });
+                                    Toast.fire({
+                                        icon: 'success',
+                                        title: 'Comment deleted successfully'
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error:', error);
+                                Toast.fire({
+                                    icon: 'error',
+                                    title: 'Failed to delete comment'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-layout>

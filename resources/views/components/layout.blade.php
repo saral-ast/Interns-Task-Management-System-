@@ -22,5 +22,16 @@
     </head>
     <body class="font-sans antialiased bg-gray-100">
         {{ $slot }}
+        @stack('scripts')
+        <script>
+            // Initialize SweetAlert2 default settings
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
     </body>
 </html>
