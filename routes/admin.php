@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\AdminLoginController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
 
 
 Route::prefix('admin')->group(function () {
@@ -11,8 +13,9 @@ Route::prefix('admin')->group(function () {
         });
 
         Route::middleware("auth:admin")->group(function() {
+            Route::post( '/logout',[AdminLoginController::class,'logout'])->name('admin.logout');
             Route::get('/',function(){
-                return view('dashboard',[
+                return view('admins.dashboard',[
                     'user' => Auth::user(),
                 ]);
             })->name('admin.dashboard');

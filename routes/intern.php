@@ -11,9 +11,10 @@ Route::prefix('intern')->group(function () {
     });
 
     Route::middleware("auth:user")->group(function() {
+        Route::post( '/logout',[InternLoginController::class,'logout'])->name('intern.logout');
         Route::get('/',function(){
           //  dd('das');
-            return view('dashboard',[
+            return view('interns.dashboard',[
                 'user' => Auth::user(),
             ]);
         })->name('intern.dashboard');

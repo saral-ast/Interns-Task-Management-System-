@@ -31,4 +31,14 @@ class InternLoginController extends Controller
         
         
     }
+
+     public function logout(){
+        try {
+         
+            Auth::guard('user')->logout();
+            return redirect()->route('intern.login');
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 }
