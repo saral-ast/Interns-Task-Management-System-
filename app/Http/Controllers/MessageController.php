@@ -57,7 +57,7 @@ class MessageController extends Controller
             'receiver_id' => $request->receiver_id
         ]);
 
-        // Broadcast the message
+        // Broadcast the message and ensure it executes immediately
         broadcast(new MessageSent($message))->toOthers();
 
         return response()->json($message);

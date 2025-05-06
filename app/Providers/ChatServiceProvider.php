@@ -19,9 +19,10 @@ class ChatServiceProvider extends ServiceProvider
         Route::middleware('web')
             ->group(base_path('routes/chat.php'));
 
-        // Register broadcast channels
+        // Register broadcast channels with CSRF protection
         Broadcast::routes(['middleware' => ['web', 'auth:admin,user']]);
 
+        // Include channel authorization routes
         require base_path('routes/channels.php');
     }
 }

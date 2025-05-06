@@ -207,28 +207,62 @@
         }
     </style>
     
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://js.pusher.com/8.3.0/pusher.min.js"></script>
     <script>
-        const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
-            encrypted: true
-        });
-
-        const channel = pusher.subscribe('chat.{{ $userType }}.{{ $currentUser->id }}');
-
-        channel.bind('message.sent', function(data) {
-            if (data.sender_type === $('#receiver_type').val() && 
-                data.sender_id === parseInt($('#receiver_id').val())) {
-                appendMessage(data, false);
-                scrollToBottom();
-            }
-        });
-
+        // Initialize variables
         const messagesContainer = $('#messages-container');
+        const messagesWrapper = $('#messages-container > div');
         const messageForm = $('#message-form');
         const chatHeader = $('#chat-header');
         const noChatSelected = $('#no-chat-selected');
         const messageInput = $('#message-input');
+
+        // Debug for Pusher
+        Pusher.logToConsole = true;
+
+        // Initialize Pusher
+        const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+            encrypted: true,
+        });
+
+        // Subscribe to personal channel for current user
+        const channel = pusher.subscribe('chat.{{ $userType }}.{{ $currentUser->id }}');
+        
+        // Debug channel subscription
+        pusher.connection.bind('connected', function() {
+            console.log('Connected to Pusher');
+        });
+
+        channel.bind('pusher:subscription_succeeded', function() {
+            console.log('Successfully subscribed to channel: chat.{{ $userType }}.{{ $currentUser->id }}');
+        });
+
+        channel.bind('pusher:subscription_error', function(status) {
+            console.error('Error subscribing to channel:', status);
+        });
+
+        // Listen for incoming messages
+        channel.bind('message.sent', function(data) {
+            console.log('Received message via Pusher:', data);
+            
+            // Check if this message belongs to the currently open chat
+            const currentReceiverId = $('#receiver_id').val();
+            const currentReceiverType = $('#receiver_type').val();
+            
+            // Much simpler condition: Show message if it's part of the current conversation
+            // either as sender or receiver, regardless of which side initiated
+            if ((data.sender_type === currentReceiverType && parseInt(data.sender_id) === parseInt(currentReceiverId)) || 
+                (data.receiver_type === currentReceiverType && parseInt(data.receiver_id) === parseInt(currentReceiverId))) {
+                
+                // Determine if this is our own message or from the other person
+                const isOwn = data.sender_type === '{{ $userType }}' && 
+                             parseInt(data.sender_id) === {{ $currentUser->id }};
+                             
+                appendMessage(data, isOwn);
+                scrollToBottom();
+            }
+        });
 
         $('.user-select').click(function() {
             const userType = $(this).data('user-type');
@@ -245,7 +279,7 @@
             $('#receiver_id').val(userId);
 
             chatHeader.removeClass('hidden');
-            messagesContainer.removeClass('hidden').css('display', 'flex');
+            messagesContainer.removeClass('hidden').css('display', 'block');
             messageForm.removeClass('hidden');
             noChatSelected.addClass('hidden');
 
@@ -257,28 +291,50 @@
             const content = messageInput.val().trim();
             if (!content) return;
 
+            const receiverType = $('#receiver_type').val();
+            const receiverId = $('#receiver_id').val();
+
+            // Show immediate feedback by displaying the message
+            const tempMessage = {
+                content: content,
+                created_at: new Date(),
+                sender_type: '{{ $userType }}',
+                sender_id: {{ $currentUser->id }},
+                receiver_type: receiverType,
+                receiver_id: receiverId
+            };
+            
+            // Display the message immediately
+            appendMessage(tempMessage, true);
+            scrollToBottom();
+            
+            // Clear the input field
+            messageInput.val('');
+            
+            // Now send to server
             $.ajax({
                 url: '{{ route("messages.store") }}',
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
                     content: content,
-                    receiver_type: $('#receiver_type').val(),
-                    receiver_id: $('#receiver_id').val()
+                    receiver_type: receiverType,
+                    receiver_id: receiverId
                 },
                 success: function(response) {
-                    appendMessage(response, true);
-                    messageInput.val('');
-                    scrollToBottom();
+                    console.log('Message sent successfully:', response);
                 },
                 error: function(xhr) {
                     console.error('Error sending message:', xhr);
+                    alert('Failed to send message. Please try again.');
                 }
             });
         });
 
         function loadMessages(receiverType, receiverId) {
+            // Clear existing messages
             $('#messages-container > div').empty();
+            
             $.ajax({
                 url: '{{ route("messages.get") }}',
                 method: 'GET',
@@ -287,12 +343,14 @@
                     receiver_id: receiverId
                 },
                 success: function(messages) {
-                    messages.forEach(message => {
-                        const isOwn = message.sender_type === '{{ $userType }}' && 
-                                     message.sender_id === {{ $currentUser->id }};
-                        appendMessage(message, isOwn);
-                    });
-                    scrollToBottom();
+                    if (messages.length > 0) {
+                        messages.forEach(message => {
+                            const isOwn = message.sender_type === '{{ $userType }}' && 
+                                         parseInt(message.sender_id) === {{ $currentUser->id }};
+                            appendMessage(message, isOwn);
+                        });
+                        scrollToBottom();
+                    }
                 },
                 error: function(xhr) {
                     console.error('Error loading messages:', xhr);
