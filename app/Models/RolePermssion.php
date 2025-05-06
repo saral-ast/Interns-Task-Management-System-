@@ -9,4 +9,5 @@ class RolePermssion extends Model
 {
     /** @use HasFactory<\Database\Factories\RolePermssionFactory> */
     use HasFactory;
+    protected $guarded = [];
 }

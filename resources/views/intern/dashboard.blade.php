@@ -10,19 +10,19 @@
                             <!-- Active Tasks Card -->
                             <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
                                 <h3 class="text-lg font-medium text-blue-800 mb-2">Active Tasks</h3>
-                                <p class="text-3xl font-bold text-blue-600">{{ $tasks->where('status', 'pending')->count() + $tasks->where('status', 'in_progress')->count() }}</p>
+                                <p class="text-3xl font-bold text-blue-600">{{ $activeTasksCount }}</p>
                             </div>
                             
                             <!-- Completed Tasks Card -->
                             <div class="bg-green-50 p-6 rounded-lg border border-green-100">
                                 <h3 class="text-lg font-medium text-green-800 mb-2">Completed Tasks</h3>
-                                <p class="text-3xl font-bold text-green-600">{{ $tasks->where('status', 'completed')->count() }}</p>
+                                <p class="text-3xl font-bold text-green-600">{{ $completedTasksCount }}</p>
                             </div>
                             
                             <!-- Total Tasks Card -->
                             <div class="bg-purple-50 p-6 rounded-lg border border-purple-100">
                                 <h3 class="text-lg font-medium text-purple-800 mb-2">Total Tasks</h3>
-                                <p class="text-3xl font-bold text-purple-600">{{ $tasks->count() }}</p>
+                                <p class="text-3xl font-bold text-purple-600">{{ $totalTasksCount }}</p>
                             </div>
                         </div>
 
@@ -32,7 +32,7 @@
                                 <h3 class="text-lg font-medium text-gray-900">Recent Tasks</h3>
                             </div>
                             <div class="divide-y divide-gray-200">
-                                @forelse($tasks->take(5) as $task)
+                                @forelse($latestTasks as $task)
                                     <div class="p-4 hover:bg-gray-50 transition-colors duration-150">
                                         <div class="flex justify-between items-start">
                                             <div>

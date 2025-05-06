@@ -53,6 +53,26 @@
                                 />
                             </div>
 
+                            <div class="space-y-4">
+                                <label class="block font-medium text-base text-gray-700">Permissions</label>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    @foreach($permissions as $permission)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" 
+                                                name="permissions[]" 
+                                                value="{{ $permission->id }}" 
+                                                id="permission_{{ $permission->id }}" 
+                                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                {{ in_array($permission->id, $adminPermissions) ? 'checked' : '' }}
+                                            >
+                                            <label for="permission_{{ $permission->id }}" class="ml-2 text-sm text-gray-700">
+                                                {{ ucwords(str_replace('_', ' ', $permission->permission)) }}
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <input type="hidden" name="role_id" value="1">
 
                             <div class="flex items-center gap-6 mt-10">

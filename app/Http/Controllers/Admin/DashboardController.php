@@ -1,27 +1,29 @@
 <?php
 
-namespace App\Http\Controllers\Intern;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index() {
-        $user = Auth::guard('user')->user();
-        $tasks = $user->tasks()->get();
-        $latestTasks = $tasks->sortByDesc('created_at')->take(5);
+    public function index()
+    {
+        $tasks = \App\Models\Task::all();
+        $latestTasks = \App\Models\Task::latest()->take(5)->get();
         $activeTasksCount = $tasks->whereIn('status', ['pending', 'in_progress'])->count();
         $completedTasksCount = $tasks->where('status', 'completed')->count();
         $totalTasksCount = $tasks->count();
 
-        return view('intern.dashboard', [
+        $data = [
+            'title' => 'Dashboard',
+            'subTitle' => 'Dashboard',
             'tasks' => $tasks,
             'latestTasks' => $latestTasks,
             'activeTasksCount' => $activeTasksCount,
             'completedTasksCount' => $completedTasksCount,
             'totalTasksCount' => $totalTasksCount
-        ]);
+        ];
+        return view('admin.dashboard', $data);
     }
 }

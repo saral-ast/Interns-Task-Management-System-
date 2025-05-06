@@ -18,20 +18,40 @@ class AdminControllers extends Controller
     }
 
     public function create() {
-        return view('admin.admins.create');
+        $permissions = \App\Models\Permission::all();
+        return view('admin.admins.create', [
+            'permissions' => $permissions
+        ]);
     }
 
-    public function store(AdminRequest $request ) { 
+    public function store(AdminRequest $request) { 
         $credentials = $request->validated();
-        $credentials['role_id'] = 1;
-        Admin::create($credentials);
-        return redirect()->route('admin.admins');
+        $credentials['role_id'] = 2;
+        $admin = Admin::create($credentials);
+
+        // Get all permissions and create role permission entries
+        $permissions = \App\Models\Permission::all();
+        foreach ($permissions as $permission) {
+            \App\Models\RolePermssion::create([
+                'role_id' => $admin->role_id,
+                'permission_id' => $permission->id
+            ]);
+        }
+
+        return redirect()->route('admin.admins')->with('success', 'Administrator created successfully with all permissions.');
     }
 
     public function edit(Admin $admin) {
-        return view('admin.admins.edit',[
-            'admin' => $admin
-    ]);
+        $permissions = \App\Models\Permission::all();
+        $adminPermissions = \App\Models\RolePermssion::where('role_id', $admin->role_id)
+            ->pluck('permission_id')
+            ->toArray();
+
+        return view('admin.admins.edit', [
+            'admin' => $admin,
+            'permissions' => $permissions,
+            'adminPermissions' => $adminPermissions
+        ]);
     }
 
     public function update(Request $request, Admin $admin) {
@@ -41,7 +61,20 @@ class AdminControllers extends Controller
             $admin->password = bcrypt($request->password);
         }
         $admin->save();
-        return redirect()->route('admin.admins');
+
+        // Update permissions
+        \App\Models\RolePermssion::where('role_id', $admin->role_id)->delete();
+        
+        if($request->has('permissions')) {
+            foreach($request->permissions as $permissionId) {
+                \App\Models\RolePermssion::create([
+                    'role_id' => $admin->role_id,
+                    'permission_id' => $permissionId
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.admins')->with('success', 'Administrator updated successfully with selected permissions.');
     }
 
     public function destroy(Admin $admin)

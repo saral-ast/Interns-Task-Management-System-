@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create roles
-        $adminRole = Role::create(['name' => 'admin']);
+        $adminRole = Role::create(['name' => 'super_admin']);
+        Role::create(['name' => 'admin']);
         $internRole = Role::create(['name' => 'intern']);
 
         // Create test user with intern role
@@ -35,8 +36,24 @@ class DatabaseSeeder extends Seeder
             'role_id' => $adminRole->id,
         ]);
 
-        // Optionally: seed permissions and assign to roles if needed
-        // $permission = Permission::create(['name' => 'manage-users']);
-        // $adminRole->permissions()->attach($permission->id);
+        
+        // Create CRUD permissions for managing resources
+        $permissions = [
+
+            Permission::create(['permission' => 'create_interns']),
+            Permission::create(['permission' => 'read_interns']),
+            Permission::create(['permission' => 'update_interns']),
+            Permission::create(['permission' => 'delete_interns']),
+            
+            Permission::create(['permission' => 'create_tasks']),
+            Permission::create(['permission' => 'read_tasks']),
+            Permission::create(['permission' => 'update_tasks']),
+            Permission::create(['permission' => 'delete_tasks']),
+            
+            Permission::create(['permission' => 'create_admins']),
+            Permission::create(['permission' => 'read_admins']),
+            Permission::create(['permission' => 'update_admins']),
+            Permission::create(['permission' => 'delete_admins'])
+        ];
     }
 }

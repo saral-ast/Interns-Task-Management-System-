@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Admin extends Authenticatable
@@ -13,8 +12,29 @@ class Admin extends Authenticatable
     protected $guarded = [];
 
 
-    public function role() {
+    public function role()
+    { 
+        return $this->belongsTo(Role::class, 'role_id'); 
+    } 
+
+    public function isAdmin()
+    { 
+        return $this->role->name === 'super_admin';
+    } 
+
+    public function hasPermission($permission)
+    { 
+        if ($this->isAdmin()) { 
+            return true; 
+        } 
+
+        // Check if the admin's role has the requested permission 
+        if($this->role) { 
+            return $this->role->whereHas('permissions', function ($query) use ($permission) { 
+                $query->where('permission', $permission); 
+            })->exists(); 
+        } 
         
-        return $this->belongsTo(Role::class);
+        return false; 
     }
 }

@@ -16,7 +16,3 @@ Route::get('/', function() {
     return redirect()->route('intern.login');
 })->name('home');
 
-// Unified dashboard view
-Route::get('/dashboard', function() {
-    return view('dashboard');
-})->name('dashboard');

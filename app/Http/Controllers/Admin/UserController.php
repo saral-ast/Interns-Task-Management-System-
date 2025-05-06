@@ -36,7 +36,7 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
-        $validated['role_id'] = 2;
+        $validated['role_id'] = 3;
 
         $user = User::create([
             'name' => $validated['name'],

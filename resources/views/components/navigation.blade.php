@@ -16,24 +16,32 @@
                 </svg>
                 Dashboard
             </a>
+            @can('read_interns')
             <a href="{{ route('admin.interns') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 transition-colors duration-200 {{ request()->routeIs('admin.interns') ? 'bg-blue-100 text-blue-700 font-semibold' : '' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
                 Manage Interns
-            </a>
+            </a>   
+             @endcan
+            
+            @can('read_admins')
             <a href="{{ route('admin.admins') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 transition-colors duration-200 {{ request()->routeIs('admin.admins') ? 'bg-blue-100 text-blue-700 font-semibold' : '' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
                 Manage Admin
             </a>
+            @endcan
+
+            @can('read_tasks')
             <a href="{{ route('admin.tasks') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 transition-colors duration-200 {{ request()->routeIs('admin.tasks') ? 'bg-blue-100 text-blue-700 font-semibold' : '' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
                 All Tasks
             </a>
+            @endcan
         @endif
 
         <!-- Intern Links -->
