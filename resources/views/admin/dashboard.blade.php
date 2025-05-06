@@ -32,8 +32,15 @@
                                     <div>
                                         <h4 class="text-base font-medium text-gray-900">{{ $task->title }}</h4>
                                         <p class="text-sm text-gray-600 mt-1">{{ Str::limit($task->description, 100) }}</p>
-                                        <div class="mt-2 text-xs text-gray-500">
-                                            Assigned to: {{ $task->assignedUser->name }}
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <div class="text-sm text-gray-500">
+                                                <span class="font-medium">Created by:</span> 
+                                                {{ $task->creator ? $task->creator->name : 'Unknown' }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                <span class="font-medium">Assigned to:</span>
+                                                {{ $task->assignedUsers->pluck('name')->join(', ') ?: 'Unassigned' }}
+                                            </div>
                                         </div>
                                     </div>
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
