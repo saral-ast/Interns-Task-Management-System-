@@ -57,13 +57,16 @@
                                 </div>
 
                                 <div>
-                                    <label for="assigned_to" class="block font-medium text-base text-gray-700">Assign To</label>
-                                    <select name="assigned_to" id="assigned_to" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>
+                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign To</label>
+                                    <div class="space-y-2 max-h-60 overflow-y-auto p-3 border rounded-md border-gray-300">
                                         @foreach($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="assigned_users[]" id="user_{{ $user->id }}" value="{{ $user->id }}" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ in_array($user->id, old('assigned_users', [])) ? 'checked' : '' }}>
+                                                <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">{{ $user->name }}</label>
+                                            </div>
                                         @endforeach
-                                    </select>
-                                    @error('assigned_to')
+                                    </div>
+                                    @error('assigned_users')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>

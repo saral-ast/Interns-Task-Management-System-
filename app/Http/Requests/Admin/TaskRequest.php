@@ -22,11 +22,25 @@ class TaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'status' => 'required|string',
-            'due_date' => 'required|string',
-            'assigned_to' =>'required|string'
+            'status' => 'required|string|in:pending,in_progress,completed,cancelled',
+            'due_date' => 'required|date',
+            'assigned_users' => 'required|array',
+            'assigned_users.*' => 'exists:users,id'
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'assigned_users.required' => 'Please select at least one intern to assign the task.',
+            'assigned_users.*.exists' => 'One or more selected interns are invalid.'
         ];
     }
 }

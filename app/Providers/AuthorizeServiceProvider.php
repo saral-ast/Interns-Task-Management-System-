@@ -21,6 +21,7 @@ class AuthorizeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        
         Gate::before(function($admin,$permission){
             return $admin->hasPermission($permission);
         });

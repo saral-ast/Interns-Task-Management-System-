@@ -46,12 +46,23 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ \Carbon\Carbon::parse($task->due_date)->format('M d, Y') }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $task->assignedUser->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $task->assignedUser->email }}</div>
+                                <td class="px-6 py-4">
+                                    <div class="space-y-1">
+                                        @foreach($task->assignedUsers as $user)
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100">
+                                                    <span class="text-xs font-medium text-gray-700">{{ substr($user->name, 0, 1) }}</span>
+                                                </span>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="text-blue-600 hover:text-blue-900 mr-3">VIew Details</a>
                                     <a href="#" class="text-red-600 hover:text-red-900 delete-task" data-id="{{ $task->id }}" data-url="{{ route('admin.tasks.destroy', $task) }}">Delete</a>
                                 </td>
                             </tr>
@@ -94,15 +105,17 @@
                                 '_token': $('meta[name="csrf-token"]').attr('content')
                             },
                             success: function(response) {
-                                Swal.fire(
-                                    'Deleted!',
-                                    'Task has been deleted.',
-                                    'success'
-                                ).then(() => {
-                                    window.location.reload();
-                                });
+                                if (response.success) {
+                                    Swal.fire(
+                                        'Deleted!',
+                                        'Task has been deleted.',
+                                        'success'
+                                    ).then(() => {
+                                        location.reload();
+                                    });
+                                }
                             },
-                            error: function(xhr) {
+                            error: function() {
                                 Swal.fire(
                                     'Error!',
                                     'Something went wrong.',

@@ -57,14 +57,17 @@
                                     @enderror
                                 </div>
 
-                                <div>
-                                    <label for="assigned_to" class="block font-medium text-base text-gray-700">Assign To</label>
-                                    <select name="assigned_to" id="assigned_to" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>
+e                                <div>
+                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign To</label>
+                                    <div class="space-y-2 max-h-60 overflow-y-auto p-3 border rounded-md border-gray-300">
                                         @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ old('assigned_to', $task->assigned_to) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="assigned_users[]" id="user_{{ $user->id }}" value="{{ $user->id }}" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ in_array($user->id, old('assigned_users', $task->assignedUsers->pluck('id')->toArray())) ? 'checked' : '' }}>
+                                                <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">{{ $user->name }}</label>
+                                            </div>
                                         @endforeach
-                                    </select>
-                                    @error('assigned_to')
+                                    </div>
+                                    @error('assigned_users')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
@@ -101,27 +104,27 @@
                             <!-- Comments List -->
                             <div class="space-y-4">
                                 @forelse($task->comments as $comment)
-                                    <div id="comment-{{ $comment->id }}" class="bg-gray-50 rounded-lg p-4">
-                                        <div class="flex items-start justify-between">
-                                            <div class="flex-grow">
-                                                <p class="text-sm text-gray-600">{{ $comment->comment }}</p>
-                                                <div class="mt-2 text-xs text-gray-500">
-                                                    <a href="#comment-{{ $comment->id }}" class="font-medium hover:text-indigo-600">{{ $comment->user->name }}</a>
-                                                    <span class="mx-1">•</span>
-                                                    <span>{{ $comment->created_at->diffForHumans() }}</span>
-                                                    <span class="mx-1">•</span>
-                                                    <span class="text-indigo-600">{{ ucfirst($comment->user_type) }}</span>
-                                                </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex items-center">
+                                                <span class="font-medium text-gray-900">{{ $comment->user->name }}</span>
+                                                <span class="mx-2 text-gray-500">&bull;</span>
+                                                <span class="text-sm text-gray-500">{{ $comment->created_at->diffForHumans() }}</span>
                                             </div>
-                                            <button onclick="deleteComment({{ $task->id }}, {{ $comment->id }})" class="text-red-600 hover:text-red-800 ml-4">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                            @if($comment->user_id === Auth::guard('admin')->id() && $comment->user_type === 'admin')
+                                                <form action="{{ route('admin.tasks.comments.destroy', [$task, $comment]) }}" method="POST" class="delete-comment-form">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
+                                        <p class="mt-2 text-gray-700">{{ $comment->comment }}</p>
                                     </div>
                                 @empty
-                                    <p class="text-gray-500 text-center py-4">No comments yet.</p>
+                                    <p class="text-gray-500 text-center">No comments yet.</p>
                                 @endforelse
                             </div>
                         </div>
@@ -130,49 +133,4 @@
             </div>
         </div>
     </x-navigation>
-    @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            window.deleteComment = function(taskId, commentId) {
-                Swal.fire({
-                    title: 'Delete Comment',
-                    text: 'Are you sure you want to delete this comment? This action cannot be undone.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch(`/admin/tasks/${taskId}/comments/${commentId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json',
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.message) {
-                                document.getElementById(`comment-${commentId}`).remove();
-                                Toast.fire({
-                                    icon: 'success',
-                                    title: 'Comment deleted successfully'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Toast.fire({
-                                icon: 'error',
-                                title: 'Failed to delete comment'
-                            });
-                        });
-                    }
-                });
-            }
-        });
-    </script>
-    @endpush
 </x-layout>

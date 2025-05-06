@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class TaskController extends Controller
 {
     public function index() {
-        $tasks = Task::all();
-        // dd('adasd');
+        $tasks = Task::with('assignedUsers')->get();
         return view('admin.tasks.index',[
             'tasks' => $tasks
         ]);
@@ -26,12 +25,16 @@ class TaskController extends Controller
         ]);
     }
 
-public function store(TaskRequest $request) {
+    public function store(TaskRequest $request) {
         $validated = $request->validated();
         $admin = Auth::guard('admin')->user();
         $validated['created_by'] = $admin->id;
+        
         $task = Task::create($validated);
-        // dd($task);
+        
+        if(isset($validated['assigned_users'])) {
+            $task->assignedUsers()->attach($validated['assigned_users']);
+        }
 
         return redirect()->route('admin.tasks')->with('success', 'Task created successfully.');
     }
@@ -39,20 +42,25 @@ public function store(TaskRequest $request) {
     public function edit(Task $task) {
         $users = User::all();
         return view('admin.tasks.edit',[
-            'task' => $task,
+            'task' => $task->load('assignedUsers'),
             'users' => $users
         ]);
     }
 
     public function update(TaskRequest $request, Task $task) {
         $validated = $request->validated();
-        // $validated['updated_by'] = Auth::guard('admin')->user()->id;
         $task->update($validated);
+        
+        if(isset($validated['assigned_users'])) {
+            $task->assignedUsers()->sync($validated['assigned_users']);
+        }
+        
         return redirect()->route('admin.tasks')->with('success', 'Task updated successfully.');
     }
 
     public function destroy(Task $task)
     {
+        $task->assignedUsers()->detach();
         $task->delete();
         return response()->json([
             'success' => true,

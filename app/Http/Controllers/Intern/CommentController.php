@@ -12,8 +12,8 @@ class CommentController extends BaseCommentController
 {
     public function store(Request $request, Task $task)
     {
-        // Ensure the task belongs to the authenticated user
-        if ($task->assigned_to !== Auth::guard('user')->id()) {
+        // Ensure the task is assigned to the authenticated user
+        if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
             abort(403);
         }
 

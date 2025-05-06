@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Task extends Model
 {
@@ -16,7 +17,6 @@ class Task extends Model
         'description',
         'status',
         'due_date',
-        'assigned_to',
         'created_by'
     ];
 
@@ -25,9 +25,10 @@ class Task extends Model
         return $this->hasMany(Comment::class)->orderBy('created_at', 'desc');
     }
 
-    public function assignedUser(): BelongsTo
+    public function assignedUsers(): BelongsToMany
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsToMany(User::class, 'task_users')
+                    ->withTimestamps();
     }
 
     public function creator(): BelongsTo
