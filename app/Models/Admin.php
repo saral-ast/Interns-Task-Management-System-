@@ -9,32 +9,36 @@ class Admin extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\AdminFactory> */
     use HasFactory;
-    protected $guarded = [];
 
+    protected $guarded = [];
 
     public function role()
     { 
-        return $this->belongsTo(Role::class, 'role_id'); 
-    } 
+        // Assuming admin has a one-to-many relationship with Role
+        return $this->belongsTo(Role::class);
+    }
 
-    public function isAdmin()
+    // Assuming admin is related to Role through a pivot table 'role_permssions'
+    public function rolePermissions()
     { 
-        return $this->role->name === 'super_admin';
-    } 
+        // Admin now has a many-to-many relationship with Permission through the 'role_permssions' table
+        return $this->belongsToMany(Permission::class, 'role_permssions', 'admin_id', 'permission_id');
+    }
 
+    // Check if Admin has a certain permission
     public function hasPermission($permission)
     { 
         if ($this->isAdmin()) { 
             return true; 
         } 
 
-        // Check if the admin's role has the requested permission 
-        if($this->role) { 
-            return $this->role->whereHas('permissions', function ($query) use ($permission) { 
-                $query->where('permission', $permission); 
-            })->exists(); 
-        } 
-        
-        return false; 
+        // Check if the admin has the requested permission through the role_permssions table
+        return $this->rolePermissions()->where('permission', $permission)->exists();
+    }
+
+    // Assuming isAdmin checks if this admin is a super admin
+    public function isAdmin()
+    { 
+        return $this->role()->where('id', 1)->exists(); // assuming 1 is the super_admin role_id
     }
 }

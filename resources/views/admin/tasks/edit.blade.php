@@ -16,92 +16,90 @@
                             </a>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.tasks.update', $task) }}" class="mt-6 space-y-6">
-                            @csrf
+                        <x-forms.form method="POST" action="{{ route('admin.tasks.update', $task) }}" class="mt-6 space-y-6" id="taskEditForm">
                             @method('PUT')
                             <div class="space-y-4">
-                                <div>
-                                    <label for="title" class="block font-medium text-base text-gray-700">Task Title</label>
-                                    <input type="text" name="title" id="title" value="{{ old('title', $task->title) }}" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required autofocus />
-                                    @error('title')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                                <x-forms.input 
+                                    name="title" 
+                                    label="Task Title" 
+                                    type="text" 
+                                    value="{{ old('title', $task->title) }}"
+                                    required 
+                                    placeholder="Enter task title" 
+                                />
+
+                                <x-forms.input 
+                                    name="description" 
+                                    label="Description" 
+                                    type="textarea" 
+                                    value="{{ old('description', $task->description) }}"
+                                    required 
+                                    placeholder="Enter task description" 
+                                />
+
+                                <x-forms.select name="status" label="Status">
+                                    <option value="pending" {{ old('status', $task->status) === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="in_progress" {{ old('status', $task->status) === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                    <option value="completed" {{ old('status', $task->status) === 'completed' ? 'selected' : '' }}>Completed</option>
+                                    <option value="cancelled" {{ old('status', $task->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                </x-forms.select>
+
+                                <x-forms.input 
+                                    name="due_date" 
+                                    label="Due Date" 
+                                    type="date" 
+                                    value="{{ old('due_date', \Carbon\Carbon::parse($task->due_date)->format('Y-m-d')) }}" 
+                                    required 
+                                />
+
 
                                 <div>
-                                    <label for="description" class="block font-medium text-base text-gray-700">Description</label>
-                                    <textarea name="description" id="description" rows="4" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>{{ old('description', $task->description) }}</textarea>
-                                    @error('description')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="status" class="block font-medium text-base text-gray-700">Status</label>
-                                    <select name="status" id="status" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>
-                                        <option value="pending" {{ old('status', $task->status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="in_progress" {{ old('status', $task->status) === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                        <option value="completed" {{ old('status', $task->status) === 'completed' ? 'selected' : '' }}>Completed</option>
-                                        <option value="cancelled" {{ old('status', $task->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                    </select>
-                                    @error('status')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="due_date" class="block font-medium text-base text-gray-700">Due Date</label>
-                                    <input type="datetime-local" name="due_date" id="due_date" value="{{ old('due_date', \Carbon\Carbon::parse($task->due_date)->format('Y-m-d\TH:i')) }}" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required />
-                                    @error('due_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-e                                <div>
-                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign To</label>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto p-3 border rounded-md border-gray-300">
+                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign Interns</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         @foreach($users as $user)
                                             <div class="flex items-center">
-                                                <input type="checkbox" name="assigned_users[]" id="user_{{ $user->id }}" value="{{ $user->id }}" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ in_array($user->id, old('assigned_users', $task->assignedUsers->pluck('id')->toArray())) ? 'checked' : '' }}>
-                                                <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">{{ $user->name }}</label>
+                                                <x-forms.checkbox 
+                                                    name="assigned_users[]" 
+                                                    label="{{ $user->name }}"
+                                                    value="{{ $user->id }}"
+                                                    checked="{{ in_array($user->id, old('assigned_users', $task->assignedUsers->pluck('id')->toArray())) ? 'checked' : '' }}"
+                                                />
                                             </div>
                                         @endforeach
                                     </div>
-                                    @error('assigned_users')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-6 mt-10">
-                                @can('update_task')
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                <x-forms.button class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                     Update Task
-                                </button>
-                                @endcan
+                                </x-forms.button>
                                 <a href="{{ route('admin.tasks') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-400 focus:ring ring-gray-200 disabled:opacity-25 transition ease-in-out duration-150">
                                     Cancel
                                 </a>
                             </div>
-                        </form>
+                        </x-forms.form>
 
                         <!-- Comments Section -->
                         <div class="mt-10 border-t pt-10">
                             <h2 class="text-lg font-medium text-gray-900 mb-4">Comments</h2>
                             
                             <!-- Add Comment Form -->
-                            <form action="{{ route('admin.tasks.comments.store', $task) }}" method="POST" class="mb-6">
-                                @csrf
-                                <div>
-                                    <label for="comment" class="sr-only">Add a comment</label>
-                                    <textarea name="comment" id="comment" rows="3" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" placeholder="Add your comment here..." required></textarea>
-                                </div>
+                            <x-forms.form action="{{ route('admin.tasks.comments.store', $task) }}" method="POST" class="mb-6" id="commentForm">
+                                <x-forms.input 
+                                    name="comment" 
+                                    label="Add a comment" 
+                                    type="textarea" 
+                                    required 
+                                    placeholder="Add your comment here..."
+                                    rows="3"
+                                />
                                 <div class="mt-3">
-                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                    <x-forms.button class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                         Post Comment
-                                    </button>
+                                    </x-forms.button>
                                 </div>
-                            </form>
+                            </x-forms.form>
 
                             <!-- Comments List -->
                             <div class="space-y-4">
@@ -135,4 +133,134 @@ e                                <div>
             </div>
         </div>
     </x-navigation>
+    @push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if jQuery is loaded
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded');
+            return;
+        }
+
+        // Initialize task form validation
+        $('#taskEditForm').validate({
+            rules: {
+                title: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 255
+                },
+                description: {
+                    required: true,
+                    minlength: 10
+                },
+                status: {
+                    required: true
+                },
+                due_date: {
+                    required: true,
+                    date: true
+                },
+                'assigned_users[]': {
+                    required: true,
+                    minlength: 1
+                }
+            },
+            messages: {
+                title: {
+                    required: "Please enter a task title",
+                    minlength: "Title must be at least 3 characters long",
+                    maxlength: "Title cannot exceed 255 characters"
+                },
+                description: {
+                    required: "Please enter a task description",
+                    minlength: "Description must be at least 10 characters long"
+                },
+                status: {
+                    required: "Please select a status"
+                },
+                due_date: {
+                    required: "Please select a due date",
+                    date: "Please enter a valid date"
+                },
+                'assigned_users[]': {
+                    required: "Please select at least one intern",
+                    minlength: "Please select at least one intern"
+                }
+            },
+            submitHandler: function (form) {
+                // Show loading state
+                const submitButton = $(form).find('button[type="submit"]');
+                submitButton.prop('disabled', true);
+                
+                // Submit the form
+                form.submit();
+            },
+            errorElement: 'span',
+            errorClass: 'text-red-500 text-sm mt-1',
+            highlight: function(element) {
+                $(element).addClass('border-red-500').removeClass('border-gray-300');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('border-red-500').addClass('border-gray-300');
+            }
+        });
+
+        // Initialize comment form validation
+        $('#commentForm').validate({
+            rules: {
+                comment: {
+                    required: true,
+                    minlength: 2,
+                    maxlength: 1000
+                }
+            },
+            messages: {
+                comment: {
+                    required: "Please enter a comment",
+                    minlength: "Comment must be at least 2 characters long",
+                    maxlength: "Comment cannot exceed 1000 characters"
+                }
+            },
+            submitHandler: function (form) {
+                // Show loading state
+                const submitButton = $(form).find('button[type="submit"]');
+                submitButton.prop('disabled', true);
+                
+                // Submit the form
+                form.submit();
+            },
+            errorElement: 'span',
+            errorClass: 'text-red-500 text-sm mt-1',
+            highlight: function(element) {
+                $(element).addClass('border-red-500').removeClass('border-gray-300');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('border-red-500').addClass('border-gray-300');
+            }
+        });
+
+        // Handle comment deletion
+        $('.delete-comment-form').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.off('submit').submit();
+                }
+            });
+        });
+    });
+</script>
+@endpush
 </x-layout>
+

@@ -94,6 +94,7 @@
                                 </div>
 
                                 <!-- Fixed footer with message form -->
+                                                               <!-- Fixed footer with message form -->
                                 <div id="message-form" class="p-4 border-t border-gray-200 hidden bg-white z-10 shadow-inner flex-shrink-0">
                                     <form id="send-message-form" class="flex items-center space-x-2">
                                         <input type="hidden" id="receiver_type" name="receiver_type">
@@ -117,7 +118,6 @@
                                         </button>
                                     </form>
                                 </div>
-
                                 <!-- No chat selected state with improved styling -->
                                 <div id="no-chat-selected" class="flex-1 flex items-center justify-center bg-gray-50/50">
                                     <div class="text-center space-y-4 p-6 max-w-sm mx-auto">

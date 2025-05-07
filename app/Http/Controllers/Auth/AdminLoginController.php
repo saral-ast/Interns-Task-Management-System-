@@ -20,18 +20,24 @@ class AdminLoginController extends Controller
 
     public function login(AdminLoginRequest $request){
         try {
-             
-             $credentials = $request->validated();
+            $credentials = $request->validated();
             
-             if(Auth::guard('admin')->attempt($credentials)){
-                  
+            if(Auth::guard('admin')->attempt($credentials)){
+                $request->session()->regenerate();
+                return redirect()->intended(route('admin.dashboard'));
+            }
 
-                  return redirect()->route('admin.dashboard');
-             }
-             dd('sfd');
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'The provided credentials do not match our records.',
+                ]);
         } catch (Exception $e) {
-            //throw $th;
-            throw $e;
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'An error occurred during login. Please try again.',
+                ]);
         }
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Migrations\Migration;
@@ -15,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('role_permssions', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Role::class,'role_id');
+            $table->foreignIdFor(Admin::class,'admin_id');
             $table->foreignIdFor(Permission::class,'permission_id');
             $table->timestamps();
         });

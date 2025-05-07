@@ -16,74 +16,146 @@
                             </a>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.tasks.store') }}" class="mt-6 space-y-6">
-                            @csrf
+                        <x-forms.form method="POST" action="{{ route('admin.tasks.store') }}" class="mt-6 space-y-6" id="taskCreateForm">
                             <div class="space-y-4">
-                                <div>
-                                    <label for="title" class="block font-medium text-base text-gray-700">Task Title</label>
-                                    <input type="text" name="title" id="title" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required autofocus />
-                                    @error('title')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                                <x-forms.input 
+                                    name="title" 
+                                    label="Task Title" 
+                                    type="text" 
+                                     
+                                    placeholder="Enter task title"
+                                    value="{{ old('title') }}"
+                                />
+
+                                <x-forms.input 
+                                    name="description" 
+                                    label="Description" 
+                                    type="textarea" 
+                                     
+                                    placeholder="Enter task description"
+                                    value="{{ old('description') }}"
+                                />
+
+                                <x-forms.select name="status" label="Status">
+                                    <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="in_progress" {{ old('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                    <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+                                    <option value="cancelled" {{ old('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                </x-forms.select>
+
+                                <x-forms.input 
+                                    name="due_date" 
+                                    label="Due Date" 
+                                    type="date" 
+                                     
+                                    value="{{ old('due_date') }}"
+                                />
 
                                 <div>
-                                    <label for="description" class="block font-medium text-base text-gray-700">Description</label>
-                                    <textarea name="description" id="description" rows="4" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required></textarea>
-                                    @error('description')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="status" class="block font-medium text-base text-gray-700">Status</label>
-                                    <select name="status" id="status" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required>
-                                        <option value="pending">Pending</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                    </select>
-                                    @error('status')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="due_date" class="block font-medium text-base text-gray-700">Due Date</label>
-                                    <input type="datetime-local" name="due_date" id="due_date" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" required />
-                                    @error('due_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign To</label>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto p-3 border rounded-md border-gray-300">
+                                    <label class="block font-medium text-base text-gray-700 mb-2">Assign Interns</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         @foreach($users as $user)
                                             <div class="flex items-center">
-                                                <input type="checkbox" name="assigned_users[]" id="user_{{ $user->id }}" value="{{ $user->id }}" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ in_array($user->id, old('assigned_users', [])) ? 'checked' : '' }}>
-                                                <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">{{ $user->name }}</label>
+                                                <x-forms.checkbox 
+                                                    name="assigned_users[]" 
+                                                    label="{{ $user->name }}"
+                                                    value="{{ $user->id }}"
+                                                    checked="{{ in_array($user->id, old('assigned_users', [])) ? 'checked' : '' }}"
+                                                />
                                             </div>
                                         @endforeach
                                     </div>
-                                    @error('assigned_users')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-6 mt-10">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                <x-forms.button class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                     Create Task
-                                </button>
+                                </x-forms.button>
                                 <a href="{{ route('admin.tasks') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-400 focus:ring ring-gray-200 disabled:opacity-25 transition ease-in-out duration-150">
                                     Cancel
                                 </a>
                             </div>
-                        </form>
+                        </x-forms.form>
                     </div>
                 </div>
             </div>
         </div>
     </x-navigation>
+    @push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if jQuery is loaded
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded');
+            return;
+        }
+
+        // Initialize form validation
+        $('#taskCreateForm').validate({
+            rules: {
+                title: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 255
+                },
+                description: {
+                    required: true,
+                    minlength: 10
+                },
+                status: {
+                    required: true
+                },
+                due_date: {
+                    required: true,
+                    date: true
+                },
+                'assigned_users[]': {
+                    required: true,
+                    minlength: 1
+                }
+            },
+            messages: {
+                title: {
+                    required: "Please enter a task title",
+                    minlength: "Title must be at least 3 characters long",
+                    maxlength: "Title cannot exceed 255 characters"
+                },
+                description: {
+                    required: "Please enter a task description",
+                    minlength: "Description must be at least 10 characters long"
+                },
+                status: {
+                    required: "Please select a status"
+                },
+                due_date: {
+                    required: "Please select a due date",
+                    date: "Please enter a valid date"
+                },
+                'assigned_users[]': {
+                    required: "Please select at least one intern",
+                    minlength: "Please select at least one intern"
+                }
+            },
+            submitHandler: function (form) {
+                // Show loading state
+                const submitButton = $(form).find('button[type="submit"]');
+                submitButton.prop('disabled', true);
+                
+                // Submit the form
+                form.submit();
+            },
+            errorElement: 'span',
+            errorClass: 'text-red-500 text-sm mt-1',
+            highlight: function(element) {
+                $(element).addClass('border-red-500').removeClass('border-gray-300');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('border-red-500').addClass('border-gray-300');
+            }
+        });
+    });
+</script>
+@endpush
 </x-layout>
+

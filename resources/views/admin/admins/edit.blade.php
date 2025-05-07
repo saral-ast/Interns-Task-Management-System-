@@ -16,59 +16,58 @@
                             </a>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.admins.update', $admin) }}" class="mt-6 space-y-6">
-                            @csrf
+                        <x-forms.form method="POST" action="{{ route('admin.admins.update', $admin) }}" class="mt-6 space-y-6" id="adminEditForm">
                             @method('PUT')
                             <div class="space-y-4">
                                 <x-forms.input 
                                     name="name" 
                                     label="Full Name" 
                                     type="text"
-                                    value="{{ $admin->name }}" 
+                                    value="{{ old('name', $admin->name) }}" 
                                     required 
-                                    placeholder="Enter administrator name" 
+                                    placeholder="Enter administrator name"
+                                    autocomplete="name"
                                 />
                                 
                                 <x-forms.input 
                                     name="email" 
                                     label="Email Address" 
                                     type="email" 
-                                    value="{{ $admin->email }}"
+                                    value="{{ old('email', $admin->email) }}"
                                     required 
-                                    placeholder="Enter administrator email" 
+                                    placeholder="Enter administrator email"
+                                    autocomplete="email"
                                 />
                                 
                                 <x-forms.input 
                                     name="password" 
                                     label="Password" 
                                     type="password" 
-                                    placeholder="Enter new password (leave empty to keep current)" 
+                                    placeholder="Enter new password (leave empty to keep current)"
+                                    autocomplete="new-password"
                                 />
                                 
                                 <x-forms.input 
                                     name="password_confirmation" 
                                     label="Confirm Password" 
                                     type="password" 
-                                    placeholder="Confirm new password" 
+                                    placeholder="Confirm new password"
+                                    autocomplete="new-password"
                                 />
                             </div>
-
+                           
                             <div class="space-y-4">
                                 <label class="block font-medium text-base text-gray-700">Permissions</label>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     @foreach($permissions as $permission)
-                                        <div class="flex items-center">
-                                            <input type="checkbox" 
-                                                name="permissions[]" 
-                                                value="{{ $permission->id }}" 
-                                                id="permission_{{ $permission->id }}" 
-                                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                {{ in_array($permission->id, $adminPermissions) ? 'checked' : '' }}
-                                            >
-                                            <label for="permission_{{ $permission->id }}" class="ml-2 text-sm text-gray-700">
-                                                {{ ucwords(str_replace('_', ' ', $permission->permission)) }}
-                                            </label>
-                                        </div>
+                                     {{-- @dd(in_array( $permission->id, $adminPermissions)) --}}
+                                        <x-forms.checkbox 
+                                            name="permissions[]" 
+                                            value="{{ $permission->id }}" 
+                                            id="permission_{{ $permission->id }}"
+                                            label="{{ ucwords(str_replace('_', ' ', $permission->permission)) }}"
+                                            checked="{{ in_array($permission->id, $adminPermissions) }}"
+                                        />
                                     @endforeach
                                 </div>
                             </div>
@@ -76,17 +75,81 @@
                             <input type="hidden" name="role_id" value="1">
 
                             <div class="flex items-center gap-6 mt-10">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                <x-forms.button class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                     Update Administrator
-                                </button>
+                                </x-forms.button>
                                 <a href="{{ route('admin.admins') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-400 focus:ring ring-gray-200 disabled:opacity-25 transition ease-in-out duration-150">
                                     Cancel
                                 </a>
                             </div>
-                        </form>
+                        </x-forms.form>
                     </div>
                 </div>
             </div>
         </div>
     </x-navigation>
 </x-layout>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if jQuery is loaded
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded');
+            return;
+        }
+
+        // Initialize form validation
+        $('#adminEditForm').validate({
+            rules: {
+                name: {
+                    required: true,
+                    minlength: 2
+                },
+                email: {
+                    required: true,
+                    email: true
+                },
+                password: {
+                    minlength: 8
+                },
+                password_confirmation: {
+                    equalTo: "#password"
+                }
+            },
+            messages: {
+                name: {
+                    required: "Please enter the administrator's name",
+                    minlength: "Name must be at least 2 characters long"
+                },
+                email: {
+                    required: "Please enter the administrator's email address",
+                    email: "Please enter a valid email address"
+                },
+                password: {
+                    minlength: "Password must be at least 8 characters long"
+                },
+                password_confirmation: {
+                    equalTo: "Passwords do not match"
+                }
+            },
+            submitHandler: function (form) {
+                // Show loading state
+                const submitButton = $(form).find('button[type="submit"]');
+                submitButton.prop('disabled', true);
+                
+                // Submit the form
+                form.submit();
+            },
+            errorElement: 'span',
+            errorClass: 'text-red-500 text-sm mt-1',
+            highlight: function(element) {
+                $(element).addClass('border-red-500').removeClass('border-gray-300');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('border-red-500').addClass('border-gray-300');
+            }
+        });
+    });
+</script>
+@endpush

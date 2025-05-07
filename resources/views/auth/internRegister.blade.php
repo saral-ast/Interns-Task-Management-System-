@@ -13,14 +13,16 @@
                 </p>
             </div>
             
-            <x-forms.form method="POST" action="{{ route('intern.register.submit') }}" class="space-y-6">
+            <x-forms.form method="POST" action="{{ route('intern.register.submit') }}" class="space-y-6" id="internRegisterForm">
                 <div class="space-y-5">
                     <x-forms.input 
                         name="name" 
                         label="Full Name" 
                         type="text" 
                         required 
-                        placeholder="Enter your full name" 
+                        placeholder="Enter your full name"
+                        value="{{ old('name') }}"
+                        autocomplete="name"
                     />
                     
                     <x-forms.input 
@@ -28,7 +30,9 @@
                         label="Email Address" 
                         type="email" 
                         required 
-                        placeholder="Enter your email" 
+                        placeholder="Enter your email"
+                        value="{{ old('email') }}"
+                        autocomplete="email"
                     />
                     
                     <x-forms.input 
@@ -36,7 +40,8 @@
                         label="Password" 
                         type="password" 
                         required 
-                        placeholder="Create a password" 
+                        placeholder="Create a password"
+                        autocomplete="new-password"
                     />
                     
                     <x-forms.input 
@@ -44,7 +49,8 @@
                         label="Confirm Password" 
                         type="password" 
                         required 
-                        placeholder="Confirm your password" 
+                        placeholder="Confirm your password"
+                        autocomplete="new-password"
                     />
                 </div>
 
@@ -63,4 +69,72 @@
             </x-forms.form>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if jQuery is loaded
+            if (typeof jQuery === 'undefined') {
+                console.error('jQuery is not loaded');
+                return;
+            }
+
+            // Initialize form validation
+            $('#internRegisterForm').validate({
+                rules: {
+                    name: {
+                        required: true,
+                        minlength: 2
+                    },
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    password: {
+                        required: true,
+                        minlength: 8
+                    },
+                    password_confirmation: {
+                        required: true,
+                        equalTo: "#password"
+                    }
+                },
+                messages: {
+                    name: {
+                        required: "Please enter your full name",
+                        minlength: "Name must be at least 2 characters long"
+                    },
+                    email: {
+                        required: "Please enter your email address",
+                        email: "Enter a valid email address"
+                    },
+                    password: {
+                        required: "Please enter a password",
+                        minlength: "Password must be at least 8 characters long"
+                    },
+                    password_confirmation: {
+                        required: "Please confirm your password",
+                        equalTo: "Passwords do not match"
+                    }
+                },
+                submitHandler: function (form) {
+                    // Show loading state
+                    const submitButton = $(form).find('button[type="submit"]');
+                    submitButton.prop('disabled', true);
+                    
+                    // Submit the form
+                    form.submit();
+                },
+                errorElement: 'span',
+                errorClass: 'text-red-500 text-sm mt-1',
+                highlight: function(element) {
+                    $(element).addClass('border-red-500').removeClass('border-gray-300');
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass('border-red-500').addClass('border-gray-300');
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-layout> 

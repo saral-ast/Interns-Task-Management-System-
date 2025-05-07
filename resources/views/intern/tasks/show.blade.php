@@ -20,37 +20,44 @@
                             {{-- @csrf --}}
                             {{-- @method('PUT') --}}
                             <div class="space-y-4">
-                                <div>
-                                    <label for="title" class="block font-medium text-base text-gray-700">Task Title</label>
-                                    <input type="text" name="title" id="title" value="{{ $task->title }}" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 bg-gray-50 p-3" disabled />
-                                </div>
+                                <x-forms.input 
+                                    name="title" 
+                                    label="Task Title" 
+                                    type="text" 
+                                    value="{{ $task->title }}"
+                                    disabled
+                                />
 
-                                <div>
-                                    <label for="description" class="block font-medium text-base text-gray-700">Description</label>
-                                    <textarea name="description" id="description" rows="4" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 bg-gray-50 p-3" disabled>{{ $task->description }}</textarea>
-                                </div>
+                                <x-forms.input 
+                                    name="description" 
+                                    label="Description" 
+                                    type="textarea" 
+                                    value="{{ $task->description }}"
+                                    rows="4"
+                                    disabled
+                                />
 
-                                <div>
-                                    <label for="status" class="block font-medium text-base text-gray-700">Status</label>
-                                    <select name="status" id="status" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" disabled>
-                                        <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="in_progress" {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                        <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                                    </select>
-                                    @error('status')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                                <x-forms.select name="status" label="Status" disabled>
+                                    <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="in_progress" {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                    <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                </x-forms.select>
 
-                                <div>
-                                    <label for="due_date" class="block font-medium text-base text-gray-700">Due Date</label>
-                                    <input type="datetime-local" name="due_date" id="due_date" value="{{ \Carbon\Carbon::parse($task->due_date)->format('Y-m-d\\TH:i') }}" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 bg-gray-50 p-3" disabled />
-                                </div>
+                                <x-forms.input 
+                                    name="due_date" 
+                                    label="Due Date" 
+                                    type="datetime-local" 
+                                    value="{{ \Carbon\Carbon::parse($task->due_date)->format('Y-m-d\\TH:i') }}"
+                                    disabled
+                                />
 
-                                <div>
-                                    <label for="created_by" class="block font-medium text-base text-gray-700">Created By</label>
-                                    <input type="text" name="created_by" id="created_by" value="{{ $task->creator->name }}" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 bg-gray-50 p-3" disabled />
-                                </div>
+                                <x-forms.input 
+                                    name="created_by" 
+                                    label="Created By" 
+                                    type="text" 
+                                    value="{{ $task->creator->name }}"
+                                    disabled
+                                />
                             </div>
 
                             <!-- Comments Section -->
@@ -58,45 +65,46 @@
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Comments</h2>
                                 
                                 <!-- Add Comment Form -->
-                                <form action="{{ route('intern.tasks.comments.store', $task) }}" method="POST" class="mb-6">
-                                    @csrf
-                                    <div>
-                                        <label for="comment" class="sr-only">Add a comment</label>
-                                        <textarea name="comment" id="comment" rows="3" class="mt-1 block w-full text-base rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-3" placeholder="Add your comment here..." required></textarea>
-                                    </div>
+                                <x-forms.form action="{{ route('intern.tasks.comments.store', $task) }}" method="POST" class="mb-6" id="commentForm">
+                                    <x-forms.input 
+                                        name="comment" 
+                                        label="Add a comment" 
+                                        type="textarea" 
+                                        required 
+                                        placeholder="Add your comment here..."
+                                        rows="3"
+                                    />
                                     <div class="mt-3">
-                                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                        <x-forms.button class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                             Post Comment
-                                        </button>
+                                        </x-forms.button>
                                     </div>
-                                </form>
+                                </x-forms.form>
 
                                 <!-- Comments List -->
                                 <div class="space-y-4">
                                     @forelse($task->comments as $comment)
-                                        <div id="comment-{{ $comment->id }}" class="bg-gray-50 rounded-lg p-4">
-                                            <div class="flex items-start justify-between">
-                                                <div class="flex-grow">
-                                                    <p class="text-sm text-gray-600">{{ $comment->comment }}</p>
-                                                    <div class="mt-2 text-xs text-gray-500">
-                                                        <a href="#comment-{{ $comment->id }}" class="font-medium hover:text-indigo-600">{{ $comment->user->name }}</a>
-                                                        <span class="mx-1">•</span>
-                                                        <span>{{ $comment->created_at->diffForHumans() }}</span>
-                                                        <span class="mx-1">•</span>
-                                                        <span class="text-indigo-600">{{ ucfirst($comment->user_type) }}</span>
-                                                    </div>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex items-center">
+                                                    <span class="font-medium text-gray-900">{{ $comment->user->name }}</span>
+                                                    <span class="mx-2 text-gray-500">&bull;</span>
+                                                    <span class="text-sm text-gray-500">{{ $comment->created_at->diffForHumans() }}</span>
                                                 </div>
-                                                @if($comment->user_type === 'intern' && $comment->user_id === Auth::guard('user')->id())
-                                                <button onclick="deleteComment({{ $task->id }}, {{ $comment->id }})" class="text-red-600 hover:text-red-800 ml-4">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
+                                                @if($comment->user_id === Auth::guard('user')->id() && $comment->user_type === 'user')
+                                                    <form action="{{ route('intern.tasks.comments.destroy', [$task, $comment]) }}" method="POST" class="delete-comment-form">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                                            Delete
+                                                        </button>
+                                                    </form>
                                                 @endif
                                             </div>
+                                            <p class="mt-2 text-gray-700">{{ $comment->comment }}</p>
                                         </div>
                                     @empty
-                                        <p class="text-gray-500 text-center py-4">No comments yet.</p>
+                                        <p class="text-gray-500 text-center">No comments yet.</p>
                                     @endforelse
                                 </div>
                             </div>
@@ -107,6 +115,48 @@
     </x-navigation>
     @push('scripts')
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if jQuery is loaded
+            if (typeof jQuery === 'undefined') {
+                console.error('jQuery is not loaded');
+                return;
+            }
+
+            // Initialize comment form validation
+            $('#commentForm').validate({
+                rules: {
+                    comment: {
+                        required: true,
+                        minlength: 2,
+                        maxlength: 1000
+                    }
+                },
+                messages: {
+                    comment: {
+                        required: "Please enter a comment",
+                        minlength: "Comment must be at least 2 characters long",
+                        maxlength: "Comment cannot exceed 1000 characters"
+                    }
+                },
+                submitHandler: function (form) {
+                    // Show loading state
+                    const submitButton = $(form).find('button[type="submit"]');
+                    submitButton.prop('disabled', true);
+                    
+                    // Submit the form
+                    form.submit();
+                },
+                errorElement: 'span',
+                errorClass: 'text-red-500 text-sm mt-1',
+                highlight: function(element) {
+                    $(element).addClass('border-red-500').removeClass('border-gray-300');
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass('border-red-500').addClass('border-gray-300');
+                }
+            });
+
+            // Handle comment deletion
         $(document).ready(function() {
             window.deleteComment = function(taskId, commentId) {
                 Swal.fire({
