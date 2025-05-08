@@ -12,4 +12,7 @@ Route::middleware(['auth:admin,user'])->group(function () {
     
     // Route for getting unread message counts
     Route::get('/messages/unread-counts', [MessageController::class, 'getUnreadCounts'])->name('messages.unread-counts');
+    
+    // Route for getting total unread message count
+    Route::get('/messages/total-unread', [MessageController::class, 'getTotalUnreadCount'])->name('messages.total-unread');
 });

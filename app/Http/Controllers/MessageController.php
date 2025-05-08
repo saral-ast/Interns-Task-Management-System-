@@ -122,4 +122,23 @@ class MessageController extends Controller
         
         return response()->json($unreadCounts);
     }
+
+    /**
+     * Get the total count of unread messages for the current user
+     *
+     * @return int
+     */
+    public function getTotalUnreadCount()
+    {
+        $isAdmin = Auth::guard('admin')->check();
+        $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
+        $userType = $isAdmin ? 'admin' : 'intern';
+        
+        $count = Message::where('receiver_type', $userType)
+            ->where('receiver_id', $user->id)
+            ->whereNull('read_at')
+            ->count();
+            
+        return response()->json($count);
+    }
 }

@@ -280,6 +280,9 @@
                             
                             // Update or create a notification badge
                             updateNotificationBadge(data.message.sender_type, data.message.sender_id);
+                            
+                            // Also update the navigation badge
+                            updateChatNavigationBadge();
                         }
                     }
                 });
@@ -566,6 +569,27 @@
             success: function() {
                 // After marking the message as read, update the notification badges
                 updateNotificationBadge(currentReceiverType, currentReceiverId);
+                
+                // Also update the navigation badge
+                updateChatNavigationBadge();
+            }
+        });
+    }
+
+    // Function to update the navigation chat badge
+    function updateChatNavigationBadge() {
+        $.ajax({
+            url: '{{ route("messages.total-unread") }}',
+            method: 'GET',
+            success: function(response) {
+                const unreadCount = parseInt(response);
+                const chatUnreadBadge = $('#chat-unread-count');
+                
+                if (unreadCount > 0) {
+                    chatUnreadBadge.text(unreadCount).removeClass('hidden');
+                } else {
+                    chatUnreadBadge.addClass('hidden');
+                }
             }
         });
     }
@@ -581,6 +605,7 @@
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
             updateNotificationBadge();
+            updateChatNavigationBadge();
         }
     });
    </script>

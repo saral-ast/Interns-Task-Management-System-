@@ -44,6 +44,54 @@
         {{ $slot }}
     </main>
 
+    <!-- Chat Unread Message Count Script -->
+    <script>
+        $(document).ready(function() {
+            // Function to update the chat unread count
+            function updateChatUnreadCount() {
+                $.ajax({
+                    url: '{{ route("messages.total-unread") }}',
+                    method: 'GET',
+                    success: function(response) {
+                        const unreadCount = parseInt(response);
+                        const chatUnreadBadge = $('#chat-unread-count');
+                        
+                        if (unreadCount > 0) {
+                            chatUnreadBadge.text(unreadCount).removeClass('hidden');
+                        } else {
+                            chatUnreadBadge.addClass('hidden');
+                        }
+                    }
+                });
+            }
+            
+            // Update the chat unread count when the page loads
+            updateChatUnreadCount();
+            
+            // Update the chat unread count every 10 seconds
+            setInterval(updateChatUnreadCount, 10000);
+            
+            // Also update when the page becomes visible again
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    updateChatUnreadCount();
+                }
+            });
+            
+            // Listen for echo broadcast events
+            if (window.Echo) {
+                const isAdmin = {{ Auth::guard('admin')->check() ? 'true' : 'false' }};
+                const userId = {{ Auth::guard('admin')->check() ? Auth::guard('admin')->id() : Auth::guard('user')->id() }};
+                const userType = isAdmin ? 'admin' : 'intern';
+                
+                window.Echo.private(`chat.${userType}.${userId}`)
+                    .listen('MessageSent', () => {
+                        updateChatUnreadCount();
+                    });
+            }
+        });
+    </script>
+
     <!-- ✅ Your custom scripts -->
     @stack('scripts')
 </body>
