@@ -13,24 +13,22 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $user = Auth::guard('admin')->check() ? Auth::guard('admin')->user() : Auth::guard('user')->user();
-        $userType = Auth::guard('admin')->check() ? 'admin' : 'intern';
+        $isAdmin = Auth::guard('admin')->check();
+        $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
+        $userType = $isAdmin ? 'admin' : 'intern';
 
-        // Get all messages where the current user is either sender or receiver
-        $messages = Message::where(function($query) use ($user, $userType) {
-            $query->where('sender_type', $userType)
-                  ->where('sender_id', $user->id);
-        })->orWhere(function($query) use ($user, $userType) {
-            $query->where('receiver_type', $userType)
-                  ->where('receiver_id', $user->id);
-        })->orderBy('created_at', 'desc')->get();
-
-        // Get all admins and interns for the chat list
-        $admins = Admin::all();
-        $interns = User::all();
+        // Get all admins and interns with unread message counts
+        $admins = Admin::all()->map(function($admin) use ($userType, $user) {
+            $admin->unread_count = Message::unreadCount($userType, $user->id, 'admin', $admin->id);
+            return $admin;
+        });
+        
+        $interns = User::all()->map(function($intern) use ($userType, $user) {
+            $intern->unread_count = Message::unreadCount($userType, $user->id, 'intern', $intern->id);
+            return $intern;
+        });
 
         return view('chat.index', [
-            'messages' => $messages,
             'admins' => $admins,
             'interns' => $interns,
             'currentUser' => $user,
@@ -98,5 +96,30 @@ class MessageController extends Controller
         })->orderBy('created_at', 'asc')->get();
 
         return response()->json($messages);
+    }
+
+    public function getUnreadCounts(Request $request)
+    {
+        $isAdmin = Auth::guard('admin')->check();
+        $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
+        $userType = $isAdmin ? 'admin' : 'intern';
+        
+        $unreadCounts = [];
+        
+        if ($isAdmin) {
+            // Get counts for all interns
+            $interns = User::all();
+            foreach ($interns as $intern) {
+                $unreadCounts['intern_' . $intern->id] = Message::unreadCount($userType, $user->id, 'intern', $intern->id);
+            }
+        } else {
+            // Get counts for all admins
+            $admins = Admin::all();
+            foreach ($admins as $admin) {
+                $unreadCounts['admin_' . $admin->id] = Message::unreadCount($userType, $user->id, 'admin', $admin->id);
+            }
+        }
+        
+        return response()->json($unreadCounts);
     }
 }

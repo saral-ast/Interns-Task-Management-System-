@@ -28,8 +28,13 @@
                                                         data-user-name="{{ $intern->name }}"
                                                     >
                                                         <div class="flex items-center space-x-3">
-                                                            <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors duration-200 shadow-sm">
+                                                            <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors duration-200 shadow-sm relative">
                                                                 <span class="text-base font-semibold text-indigo-800">{{ substr($intern->name, 0, 1) }}</span>
+                                                                @if($intern->unread_count > 0)
+                                                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge" data-user-type="intern" data-user-id="{{ $intern->id }}">
+                                                                        {{ $intern->unread_count }}
+                                                                    </span>
+                                                                @endif
                                                             </span>
                                                             <div>
                                                                 <span class="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{{ $intern->name }}</span>
@@ -52,8 +57,13 @@
                                                         data-user-name="{{ $admin->name }}"
                                                     >
                                                         <div class="flex items-center space-x-3">
-                                                            <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors duration-200 shadow-sm">
+                                                            <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-colors duration-200 shadow-sm relative">
                                                                 <span class="text-base font-semibold text-indigo-800">{{ substr($admin->name, 0, 1) }}</span>
+                                                                @if($admin->unread_count > 0)
+                                                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge" data-user-type="admin" data-user-id="{{ $admin->id }}">
+                                                                        {{ $admin->unread_count }}
+                                                                    </span>
+                                                                @endif
                                                             </span>
                                                             <div>
                                                                 <span class="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{{ $admin->name }}</span>
@@ -94,7 +104,6 @@
                                 </div>
 
                                 <!-- Fixed footer with message form -->
-                                                               <!-- Fixed footer with message form -->
                                 <div id="message-form" class="p-4 border-t border-gray-200 hidden bg-white z-10 shadow-inner flex-shrink-0">
                                     <form id="send-message-form" class="flex items-center space-x-2">
                                         <input type="hidden" id="receiver_type" name="receiver_type">
@@ -207,192 +216,373 @@
         }
     </style>
     
-    <script src="https://js.pusher.com/8.3.0/pusher.min.js"></script>
-    <script>
-        // Initialize variables
-        const messagesContainer = $('#messages-container');
-        const messagesWrapper = $('#messages-container > div');
-        const messageForm = $('#message-form');
-        const chatHeader = $('#chat-header');
-        const noChatSelected = $('#no-chat-selected');
-        const messageInput = $('#message-input');
+   <script>
+    // Initialize variables
+    const messagesContainer = $('#messages-container');
+    const messagesWrapper = $('#messages-container > div');
+    const messageForm = $('#message-form');
+    const chatHeader = $('#chat-header');
+    const noChatSelected = $('#no-chat-selected');
+    const messageInput = $('#message-input');
+    
+    // Track channel subscription to prevent duplicates
+    let isSubscribed = false;
+    let currentChannel = null;
+    
+    // Current conversation info
+    let currentReceiverType = null;
+    let currentReceiverId = null;
+    
+    // Initialize the poll interval for unread messages
+    let unreadPollInterval = null;
 
-        // Debug for Pusher
-        Pusher.logToConsole = true;
-
-        // Initialize Pusher
-        const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
-            encrypted: true,
-        });
-
-        // Subscribe to personal channel for current user
-        const channel = pusher.subscribe('chat.{{ $userType }}.{{ $currentUser->id }}');
-        
-        // Debug channel subscription
-        pusher.connection.bind('connected', function() {
-            console.log('Connected to Pusher');
-        });
-
-        channel.bind('pusher:subscription_succeeded', function() {
-            console.log('Successfully subscribed to channel: chat.{{ $userType }}.{{ $currentUser->id }}');
-        });
-
-        channel.bind('pusher:subscription_error', function(status) {
-            console.error('Error subscribing to channel:', status);
-        });
-
-        // Listen for incoming messages
-        channel.bind('message.sent', function(data) {
-            console.log('Received message via Pusher:', data);
-            
-            // Check if this message belongs to the currently open chat
-            const currentReceiverId = $('#receiver_id').val();
-            const currentReceiverType = $('#receiver_type').val();
-            
-            // Much simpler condition: Show message if it's part of the current conversation
-            // either as sender or receiver, regardless of which side initiated
-            if ((data.sender_type === currentReceiverType && parseInt(data.sender_id) === parseInt(currentReceiverId)) || 
-                (data.receiver_type === currentReceiverType && parseInt(data.receiver_id) === parseInt(currentReceiverId))) {
+    // Function to initialize Echo listeners
+    function initializeEchoListeners() {
+        // Check if Echo is properly initialized
+        if (window.Echo) {
+            try {
+                // Only subscribe once to avoid duplicate subscriptions
+                if (isSubscribed) {
+                    return true;
+                }
                 
-                // Determine if this is our own message or from the other person
-                const isOwn = data.sender_type === '{{ $userType }}' && 
-                             parseInt(data.sender_id) === {{ $currentUser->id }};
-                             
-                appendMessage(data, isOwn);
-                scrollToBottom();
+                // Create the channel name
+                const channelName = `chat.{{ $userType }}.{{ $currentUser->id }}`;
+                
+                // Store channel reference to prevent garbage collection
+                currentChannel = window.Echo.private(channelName);
+                
+                // Listen for incoming messages using Laravel Echo
+                currentChannel.listen('MessageSent', (data) => {
+                    // Check if this message belongs to the currently open chat
+                    const currentReceiverId = $('#receiver_id').val();
+                    const currentReceiverType = $('#receiver_type').val();
+                    
+                    // Show message if it's part of the current conversation
+                    if ((data.message.sender_type === currentReceiverType && parseInt(data.message.sender_id) === parseInt(currentReceiverId)) || 
+                        (data.message.receiver_type === currentReceiverType && parseInt(data.message.receiver_id) === parseInt(currentReceiverId))) {
+                        
+                        // Determine if this is our own message or from the other person
+                        const isOwn = data.message.sender_type === '{{ $userType }}' && 
+                                     parseInt(data.message.sender_id) === {{ $currentUser->id }};
+                                     
+                        appendMessage(data.message, isOwn);
+                        scrollToBottom();
+                        
+                        // Mark message as read if it's incoming and we're in the conversation
+                        if (!isOwn) {
+                            markMessageAsRead(data.message.id);
+                        }
+                    } else {
+                        // Message is for a different conversation, update the notification badge
+                        if (data.message.receiver_type === '{{ $userType }}' && 
+                            parseInt(data.message.receiver_id) === {{ $currentUser->id }}) {
+                            
+                            // Update or create a notification badge
+                            updateNotificationBadge(data.message.sender_type, data.message.sender_id);
+                        }
+                    }
+                });
+
+                // Alternative binding syntax in case the first method doesn't work
+                window.Echo.private(channelName)
+                    .on('MessageSent', (data) => {
+                        // Processing handled by the other listener
+                    });
+                
+                isSubscribed = true;
+                return true;
+            } catch (error) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    // Function to update notification badge
+    function updateNotificationBadge(userType, userId) {
+        // Fetch the current unread count
+        $.ajax({
+            url: '/messages/unread-counts',
+            method: 'GET',
+            success: function(response) {
+                // Update each notification badge
+                Object.keys(response).forEach(key => {
+                    const count = response[key];
+                    const [type, id] = key.split('_');
+                    
+                    let badge = $(`.notification-badge[data-user-type="${type}"][data-user-id="${id}"]`);
+                    
+                    if (count > 0) {
+                        if (badge.length) {
+                            // Update existing badge
+                            badge.text(count);
+                        } else {
+                            // Create new badge
+                            const newBadge = $('<span>')
+                                .addClass('absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge')
+                                .attr('data-user-type', type)
+                                .attr('data-user-id', id)
+                                .text(count);
+                                
+                            $(`.user-select[data-user-type="${type}"][data-user-id="${id}"] .inline-flex`).append(newBadge);
+                        }
+                    } else if (badge.length) {
+                        // Remove badge if count is 0
+                        badge.remove();
+                    }
+                });
             }
         });
+    }
 
-        $('.user-select').click(function() {
-            const userType = $(this).data('user-type');
-            const userId = $(this).data('user-id');
-            const userName = $(this).data('user-name');
+    // Function to start polling for unread messages
+    function startUnreadMessagePolling() {
+        // Clear any existing interval
+        stopUnreadMessagePolling();
+        
+        // Poll every 10 seconds
+        unreadPollInterval = setInterval(function() {
+            // Don't update for the current conversation
+            if (currentReceiverType && currentReceiverId) {
+                $.ajax({
+                    url: '/messages/unread-counts',
+                    method: 'GET',
+                    success: function(response) {
+                        // Update each notification badge except current conversation
+                        Object.keys(response).forEach(key => {
+                            const [type, id] = key.split('_');
+                            
+                            // Skip current conversation
+                            if (type === currentReceiverType && parseInt(id) === parseInt(currentReceiverId)) {
+                                return;
+                            }
+                            
+                            const count = response[key];
+                            let badge = $(`.notification-badge[data-user-type="${type}"][data-user-id="${id}"]`);
+                            
+                            if (count > 0) {
+                                if (badge.length) {
+                                    // Update existing badge
+                                    badge.text(count);
+                                } else {
+                                    // Create new badge
+                                    const newBadge = $('<span>')
+                                        .addClass('absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge')
+                                        .attr('data-user-type', type)
+                                        .attr('data-user-id', id)
+                                        .text(count);
+                                        
+                                    $(`.user-select[data-user-type="${type}"][data-user-id="${id}"] .inline-flex`).append(newBadge);
+                                }
+                            } else if (badge.length) {
+                                // Remove badge if count is 0
+                                badge.remove();
+                            }
+                        });
+                    }
+                });
+            }
+        }, 10000); // 10 seconds
+    }
 
-            // Highlight the selected user
-            $('.user-select').removeClass('bg-indigo-50');
-            $(this).addClass('bg-indigo-50');
+    // Function to stop polling
+    function stopUnreadMessagePolling() {
+        if (unreadPollInterval) {
+            clearInterval(unreadPollInterval);
+            unreadPollInterval = null;
+        }
+    }
 
-            $('#chat-user-name').text(userName);
-            $('#chat-user-initial').text(userName.charAt(0));
-            $('#receiver_type').val(userType);
-            $('#receiver_id').val(userId);
+    // Try to initialize Echo listeners when the page loads
+    let echoInitialized = initializeEchoListeners();
+    
+    // Also initialize when Echo is connected (from bootstrap.js)
+    window.addEventListener('echoConnected', () => {
+        initializeEchoListeners();
+    });
+    
+    // If not successful, retry a few times with delay
+    if (!echoInitialized) {
+        let retryCount = 0;
+        const maxRetries = 5;
+        const retryInterval = setInterval(() => {
+            retryCount++;
+            
+            echoInitialized = initializeEchoListeners();
+            
+            if (echoInitialized || retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+            }
+        }, 1000);
+    }
 
-            chatHeader.removeClass('hidden');
-            messagesContainer.removeClass('hidden').css('display', 'block');
-            messageForm.removeClass('hidden');
-            noChatSelected.addClass('hidden');
+    // Start unread message polling when the page loads
+    startUnreadMessagePolling();
 
-            loadMessages(userType, userId);
-        });
+    $('.user-select').click(function() {
+        const userType = $(this).data('user-type');
+        const userId = $(this).data('user-id');
+        const userName = $(this).data('user-name');
 
-        $('#send-message-form').submit(function(e) {
-            e.preventDefault();
-            const content = messageInput.val().trim();
-            if (!content) return;
+        // Store current conversation info
+        currentReceiverType = userType;
+        currentReceiverId = userId;
 
-            const receiverType = $('#receiver_type').val();
-            const receiverId = $('#receiver_id').val();
+        // Highlight the selected user
+        $('.user-select').removeClass('bg-indigo-50');
+        $(this).addClass('bg-indigo-50');
 
-            // Show immediate feedback by displaying the message
-            const tempMessage = {
+        $('#chat-user-name').text(userName);
+        $('#chat-user-initial').text(userName.charAt(0));
+        $('#receiver_type').val(userType);
+        $('#receiver_id').val(userId);
+
+        chatHeader.removeClass('hidden');
+        messagesContainer.removeClass('hidden').css('display', 'block');
+        messageForm.removeClass('hidden');
+        noChatSelected.addClass('hidden');
+
+        // Remove notification badge for this user
+        $(`.notification-badge[data-user-type="${userType}"][data-user-id="${userId}"]`).remove();
+
+        loadMessages(userType, userId);
+    });
+
+    $('#send-message-form').submit(function(e) {
+        e.preventDefault();
+        const content = messageInput.val().trim();
+        if (!content) return;
+
+        const receiverType = $('#receiver_type').val();
+        const receiverId = $('#receiver_id').val();
+
+        // Show immediate feedback by displaying the message
+        const tempMessage = {
+            content: content,
+            created_at: new Date(),
+            sender_type: '{{ $userType }}',
+            sender_id: {{ $currentUser->id }},
+            receiver_type: receiverType,
+            receiver_id: receiverId
+        };
+        
+        // Display the message immediately
+        appendMessage(tempMessage, true);
+        scrollToBottom();
+        
+        // Clear the input field
+        messageInput.val('');
+        
+        // Now send to server
+        $.ajax({
+            url: '{{ route("messages.store") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
                 content: content,
-                created_at: new Date(),
-                sender_type: '{{ $userType }}',
-                sender_id: {{ $currentUser->id }},
                 receiver_type: receiverType,
                 receiver_id: receiverId
-            };
-            
-            // Display the message immediately
-            appendMessage(tempMessage, true);
-            scrollToBottom();
-            
-            // Clear the input field
-            messageInput.val('');
-            
-            // Now send to server
-            $.ajax({
-                url: '{{ route("messages.store") }}',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    content: content,
-                    receiver_type: receiverType,
-                    receiver_id: receiverId
-                },
-                success: function(response) {
-                    console.log('Message sent successfully:', response);
-                },
-                error: function(xhr) {
-                    console.error('Error sending message:', xhr);
-                    alert('Failed to send message. Please try again.');
-                }
-            });
-        });
-
-        function loadMessages(receiverType, receiverId) {
-            // Clear existing messages
-            $('#messages-container > div').empty();
-            
-            $.ajax({
-                url: '{{ route("messages.get") }}',
-                method: 'GET',
-                data: {
-                    receiver_type: receiverType,
-                    receiver_id: receiverId
-                },
-                success: function(messages) {
-                    if (messages.length > 0) {
-                        messages.forEach(message => {
-                            const isOwn = message.sender_type === '{{ $userType }}' && 
-                                         parseInt(message.sender_id) === {{ $currentUser->id }};
-                            appendMessage(message, isOwn);
-                        });
-                        scrollToBottom();
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error loading messages:', xhr);
-                }
-            });
-        }
-
-        function appendMessage(message, isOwn) {
-            const messagesWrapper = $('#messages-container > div');
-            const messageElement = $('<div>') 
-                .addClass('flex mb-3 w-full ' + (isOwn ? 'justify-end' : 'justify-start'));
-
-            const messageWrapper = $('<div>')
-                .addClass('flex flex-col ' + (isOwn ? 'items-end' : 'items-start') + ' max-w-[80%]');
-
-            const messageContent = $('<div>') 
-                .addClass('inline-block px-4 py-2 break-words ' + 
-                         (isOwn ? 'message-bubble-sent text-white' : 'message-bubble-received text-gray-800 border border-gray-100'))
-                .text(message.content);
-
-            const timeStamp = $('<span>')
-                .addClass('text-xs text-gray-400 mt-1 px-2')
-                .text(new Date(message.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-
-            messageWrapper.append(messageContent, timeStamp);
-            messageElement.append(messageWrapper);
-            messagesWrapper.append(messageElement);
-        }
-
-        function scrollToBottom() {
-            const container = document.getElementById('messages-container');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
+            },
+            success: function(response) {
+                // Message sent successfully
+            },
+            error: function(xhr) {
+                // Show error message to user
+                alert('Failed to send message. Please try again.');
             }
-        }
-
-        // Auto focus on message input when chat is selected
-        $(document).on('click', '.user-select', function() {
-            setTimeout(() => {
-                $('#message-input').focus();
-            }, 100);
         });
-    </script>
+    });
+
+    function loadMessages(receiverType, receiverId) {
+        // Clear existing messages
+        messagesWrapper.empty();
+        
+        $.ajax({
+            url: '{{ route("messages.get") }}',
+            method: 'GET',
+            data: {
+                receiver_type: receiverType,
+                receiver_id: receiverId
+            },
+            success: function(messages) {
+                if (messages.length > 0) {
+                    messages.forEach(message => {
+                        const isOwn = message.sender_type === '{{ $userType }}' && 
+                                     parseInt(message.sender_id) === {{ $currentUser->id }};
+                        
+                        appendMessage(message, isOwn);
+                        
+                        // Mark all incoming messages as read
+                        if (!isOwn && !message.read_at) {
+                            markMessageAsRead(message.id);
+                        }
+                    });
+                    scrollToBottom();
+                }
+            },
+            error: function(xhr) {
+                // Error handling
+            }
+        });
+    }
+
+    function appendMessage(message, isOwn) {
+        const messageElement = $('<div>')
+            .addClass('flex mb-3 w-full ' + (isOwn ? 'justify-end' : 'justify-start'));
+
+        const messageWrapper = $('<div>')
+            .addClass('flex flex-col ' + (isOwn ? 'items-end' : 'items-start') + ' max-w-[80%]');
+
+        const messageContent = $('<div>') 
+            .addClass('inline-block px-4 py-2 break-words ' + 
+                     (isOwn ? 'message-bubble-sent text-white' : 'message-bubble-received text-gray-800 border border-gray-100'))
+            .text(message.content);
+
+        const timeStamp = $('<span>')
+            .addClass('text-xs text-gray-400 mt-1 px-2')
+            .text(new Date(message.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+
+        messageWrapper.append(messageContent, timeStamp);
+        messageElement.append(messageWrapper);
+        messagesWrapper.append(messageElement);
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('messages-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    function markMessageAsRead(messageId) {
+        $.ajax({
+            url: `/messages/${messageId}/read`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function() {
+                // After marking the message as read, update the notification badges
+                updateNotificationBadge(currentReceiverType, currentReceiverId);
+            }
+        });
+    }
+
+    // Auto focus on message input when chat is selected
+    $(document).on('click', '.user-select', function() {
+        setTimeout(() => {
+            messageInput.focus();
+        }, 100);
+    });
+    
+    // Update notification badges when the page becomes visible again
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            updateNotificationBadge();
+        }
+    });
+   </script>
     @endpush
 </x-layout>

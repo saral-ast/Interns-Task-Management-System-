@@ -11,6 +11,14 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+    <!-- Pusher Configuration -->
+    <script>
+        window.PusherConfig = {
+            key: '{{ env('PUSHER_APP_KEY') }}',
+            cluster: '{{ env('PUSHER_APP_CLUSTER', 'ap2') }}',
+        };
+    </script>
+
     <!-- App CSS/JS via Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

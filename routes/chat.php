@@ -9,4 +9,7 @@ Route::middleware(['auth:admin,user'])->group(function () {
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
     Route::get('/messages', [MessageController::class, 'getMessages'])->name('messages.get');
     Route::post('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
+    
+    // Route for getting unread message counts
+    Route::get('/messages/unread-counts', [MessageController::class, 'getUnreadCounts'])->name('messages.unread-counts');
 });

@@ -3,8 +3,6 @@ import jQuery from "jquery";
 import "jquery-validation";
 
 // Make jQuery available globally immediately
-global.jQuery = jQuery;
-global.$ = jQuery;
 window.jQuery = jQuery;
 window.$ = jQuery;
 

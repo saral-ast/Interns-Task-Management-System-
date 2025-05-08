@@ -32,4 +32,27 @@ class Message extends Model
     {
         return $this->morphTo();
     }
+    
+    /**
+     * Get the count of unread messages for a specific user
+     *
+     * @param string $receiverType
+     * @param int $receiverId
+     * @param string|null $senderType
+     * @param int|null $senderId
+     * @return int
+     */
+    public static function unreadCount(string $receiverType, int $receiverId, ?string $senderType = null, ?int $senderId = null): int
+    {
+        $query = self::where('receiver_type', $receiverType)
+            ->where('receiver_id', $receiverId)
+            ->whereNull('read_at');
+            
+        if ($senderType && $senderId) {
+            $query->where('sender_type', $senderType)
+                  ->where('sender_id', $senderId);
+        }
+        
+        return $query->count();
+    }
 }
