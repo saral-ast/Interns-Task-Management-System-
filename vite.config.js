@@ -4,15 +4,17 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
     // Load env variables
-    const env = loadEnv(mode, process.cwd(), ["VITE_", "PUSHER_"]);
+    const env = loadEnv(mode, process.cwd(), ["VITE_", "REVERB_"]);
 
     // Hardcoded fallback values (only for development)
-    const pusherKey =
-        env.VITE_PUSHER_APP_KEY ||
-        env.PUSHER_APP_KEY ||
-        "your-fallback-pusher-key";
-    const pusherCluster =
-        env.VITE_PUSHER_APP_CLUSTER || env.PUSHER_APP_CLUSTER || "ap2";
+    const reverbKey =
+        env.VITE_REVERB_APP_KEY || env.REVERB_APP_KEY || "app-key";
+
+    const reverbHost = env.VITE_REVERB_HOST || env.REVERB_HOST || "127.0.0.1";
+
+    const reverbPort = env.VITE_REVERB_PORT || env.REVERB_PORT || "8080";
+
+    const reverbScheme = env.VITE_REVERB_SCHEME || env.REVERB_SCHEME || "http";
 
     return {
         plugins: [
@@ -24,11 +26,14 @@ export default defineConfig(({ mode }) => {
         ],
         define: {
             // Make env variables available to the client
-            "import.meta.env.VITE_PUSHER_APP_KEY": JSON.stringify(pusherKey),
-            "import.meta.env.VITE_PUSHER_APP_CLUSTER":
-                JSON.stringify(pusherCluster),
-            "process.env.MIX_PUSHER_APP_KEY": JSON.stringify(pusherKey),
-            "process.env.MIX_PUSHER_APP_CLUSTER": JSON.stringify(pusherCluster),
+            "import.meta.env.VITE_REVERB_APP_KEY": JSON.stringify(reverbKey),
+            "import.meta.env.VITE_REVERB_HOST": JSON.stringify(reverbHost),
+            "import.meta.env.VITE_REVERB_PORT": JSON.stringify(reverbPort),
+            "import.meta.env.VITE_REVERB_SCHEME": JSON.stringify(reverbScheme),
+            "process.env.MIX_REVERB_APP_KEY": JSON.stringify(reverbKey),
+            "process.env.MIX_REVERB_HOST": JSON.stringify(reverbHost),
+            "process.env.MIX_REVERB_PORT": JSON.stringify(reverbPort),
+            "process.env.MIX_REVERB_SCHEME": JSON.stringify(reverbScheme),
             "process.env.NODE_ENV": JSON.stringify(mode),
         },
         // Show detailed build info to help with troubleshooting

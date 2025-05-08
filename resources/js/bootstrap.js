@@ -3,22 +3,14 @@ window.axios = axios;
 
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 
-// Import Echo and Pusher
+// Import Echo and Soketi client for Reverb
 import Echo from "laravel-echo";
-import Pusher from "pusher-js";
-
-window.Pusher = Pusher;
-
-// Disable Pusher logging
-Pusher.logToConsole = false;
+import Soketi from "@soketi/soketi-js";
 
 // Initialize Laravel Echo - Ensure this runs first
 document.addEventListener("DOMContentLoaded", () => {
     initializeEcho();
 });
-
-// Initialize Echo immediately as well (for cases where DOM is already loaded)
-initializeEcho();
 
 function initializeEcho() {
     // If Echo is already initialized, don't do it again
@@ -27,40 +19,52 @@ function initializeEcho() {
     }
 
     try {
-        // Try different methods to get Pusher credentials
-        const pusherKey =
-            // First try the PusherConfig from the blade template
-            (window.PusherConfig && window.PusherConfig.key) ||
-            // Then try Vite env variables
-            import.meta.env.VITE_PUSHER_APP_KEY ||
-            // Then try Mix env variables
-            process.env.MIX_PUSHER_APP_KEY;
+        // Try different methods to get Reverb credentials
+        const reverbHost =
+            (window.ReverbConfig && window.ReverbConfig.host) ||
+            import.meta.env.VITE_REVERB_HOST ||
+            process.env.MIX_REVERB_HOST ||
+            "127.0.0.1";
 
-        const pusherCluster =
-            (window.PusherConfig && window.PusherConfig.cluster) ||
-            import.meta.env.VITE_PUSHER_APP_CLUSTER ||
-            process.env.MIX_PUSHER_APP_CLUSTER ||
-            "ap2";
+        const reverbPort =
+            (window.ReverbConfig && window.ReverbConfig.port) ||
+            import.meta.env.VITE_REVERB_PORT ||
+            process.env.MIX_REVERB_PORT ||
+            "8080";
 
-        if (!pusherKey) {
-            throw new Error("Pusher key is undefined");
-        }
+        const reverbScheme =
+            (window.ReverbConfig && window.ReverbConfig.scheme) ||
+            import.meta.env.VITE_REVERB_SCHEME ||
+            process.env.MIX_REVERB_SCHEME ||
+            "http";
 
-        // Create the Echo instance with standard Pusher configuration
+        const reverbKey =
+            (window.ReverbConfig && window.ReverbConfig.key) ||
+            import.meta.env.VITE_REVERB_APP_KEY ||
+            process.env.MIX_REVERB_APP_KEY ||
+            "app-key";
+
+        // Create the Echo instance with Reverb configuration
         window.Echo = new Echo({
-            broadcaster: "pusher",
-            key: pusherKey,
-            cluster: pusherCluster,
-            forceTLS: true,
-            // Don't use custom WebSocket settings - let Pusher handle it
-            encrypted: true,
+            broadcaster: "reverb",
+            key: reverbKey,
+            host: `${reverbScheme}://${reverbHost}:${reverbPort}`,
+            client: Soketi,
         });
 
-        // Event handlers for Echo/Pusher connection
-        window.Echo.connector.pusher.connection.bind("connected", () => {
+        // Event handler for Echo connection
+        window.Echo.connector.socket.on("connect", () => {
             window.dispatchEvent(new CustomEvent("echoConnected"));
         });
     } catch (error) {
-        // Silently handle errors
+        console.error("Echo initialization error:", error);
     }
 }
+
+/**
+ * Echo exposes an expressive API for subscribing to channels and listening
+ * for events that are broadcast by Laravel. Echo and event broadcasting
+ * allow your team to quickly build robust real-time web applications.
+ */
+
+import './echo';

@@ -1,0 +1,33 @@
+reverb:
+  # The host that Reverb should bind to
+  host: 127.0.0.1
+
+  # The port that Reverb should bind to
+  port: 8080
+
+  # The max number of connections per user
+  max_connections: 1000
+
+  # The authentication servers
+  servers:
+    - id: app-id
+      key: app-key
+      secret: app-secret
+
+  # CORS settings
+  cors:
+    allow_origins:
+      - "*"
+    allow_methods:
+      - "*"
+    allow_headers:
+      - "*"
+
+  # SSL settings (disable for local development)
+  ssl:
+    cert: null
+    key: null
+
+  # Metrics settings
+  metrics:
+    enabled: false

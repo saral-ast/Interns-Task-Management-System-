@@ -11,11 +11,13 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-    <!-- Pusher Configuration -->
+    <!-- Reverb Configuration -->
     <script>
-        window.PusherConfig = {
-            key: '{{ env('PUSHER_APP_KEY') }}',
-            cluster: '{{ env('PUSHER_APP_CLUSTER', 'ap2') }}',
+        window.ReverbConfig = {
+            key: '{{ env('REVERB_APP_KEY', 'app-key') }}',
+            host: '{{ env('REVERB_HOST', '127.0.0.1') }}',
+            port: '{{ env('REVERB_PORT', '8080') }}',
+            scheme: '{{ env('REVERB_SCHEME', 'http') }}',
         };
     </script>
 
