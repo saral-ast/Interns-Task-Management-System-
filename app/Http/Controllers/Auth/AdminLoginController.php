@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\AdminLoginRequest;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AdminLoginController extends Controller
 {
@@ -15,7 +16,12 @@ class AdminLoginController extends Controller
      */
     public function index()
     {
-        return view('auth.adminLogin');
+        try {
+            return view('auth.adminLogin');
+        } catch (Exception $e) {
+            Log::error('Error displaying admin login page: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred. Please try again.');
+        }
     }
 
     public function login(AdminLoginRequest $request){
@@ -33,6 +39,7 @@ class AdminLoginController extends Controller
                     'email' => 'The provided credentials do not match our records.',
                 ]);
         } catch (Exception $e) {
+            Log::error('Error during admin login: ' . $e->getMessage());
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors([
@@ -43,12 +50,11 @@ class AdminLoginController extends Controller
 
     public function logout(){
         try {
-         
             Auth::guard('admin')->logout();
             return redirect()->route('admin.login');
         } catch (Exception $e) {
-            //throw $th;
-            throw $e;
+            Log::error('Error during admin logout: ' . $e->getMessage());
+            return redirect()->route('admin.login')->with('error', 'An error occurred during logout. Please try again.');
         }
     }
 }

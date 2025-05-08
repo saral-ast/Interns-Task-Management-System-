@@ -6,6 +6,8 @@ use App\Http\Requests\Auth\InternRegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -14,11 +16,16 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
-        // dd($users);
-        return view('admin.users.index', [
-            'users' => $users
-        ]);
+        try {
+            $users = User::all();
+            // dd($users);
+            return view('admin.users.index', [
+                'users' => $users
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error in admin interns index: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while loading interns. Please try again.');
+        }
     }
 
     /**
@@ -26,7 +33,12 @@ class UserController extends Controller
      */
     public function create()
     {
-       return  view('admin.users.create');
+        try {
+           return  view('admin.users.create');
+        } catch (Exception $e) {
+            Log::error('Error in intern create view: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while loading the create form. Please try again.');
+        }
     }
 
     /**
@@ -34,19 +46,25 @@ class UserController extends Controller
      */
     public function store(InternRegisterRequest $request)
     {
-        $validated = $request->validated();
+        try {
+            $validated = $request->validated();
 
-        $validated['role_id'] = 3;
+            $validated['role_id'] = 3;
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
-            'role_id' => $validated['role_id'],
-        ]);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => bcrypt($validated['password']),
+                'role_id' => $validated['role_id'],
+            ]);
 
-        return redirect()->route('admin.interns')
-            ->with('success', 'Intern created successfully.');
+            return redirect()->route('admin.interns')
+                ->with('success', 'Intern created successfully.');
+        } catch (Exception $e) {
+            Log::error('Error creating intern: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while creating the intern. Please try again.')
+                ->withInput($request->except('password'));
+        }
     }
 
     /**
@@ -62,9 +80,14 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-          return view('admin.users.edit', [
-            'user' => $user
-        ]);   
+        try {
+            return view('admin.users.edit', [
+                'user' => $user
+            ]);  
+        } catch (Exception $e) {
+            Log::error('Error in intern edit view: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while loading the edit form. Please try again.');
+        }
     }
 
     /**
@@ -72,16 +95,22 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $user->name = $request->name;
-        $user->email = $request->email;
+        try {
+            $user->name = $request->name;
+            $user->email = $request->email;
 
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($request->password);
+            if (!empty($request->password)) {
+                $user->password = bcrypt($request->password);
+            }
+
+            $user->save();
+
+            return redirect()->route('admin.interns')->with('success', 'Intern updated successfully.');
+        } catch (Exception $e) {
+            Log::error('Error updating intern: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while updating the intern. Please try again.')
+                ->withInput($request->except('password'));
         }
-
-        $user->save();
-
-        return redirect()->route('admin.interns');
     }
 
     /**
@@ -89,10 +118,18 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        $user->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'User deleted successfully'
-        ]);
+        try {
+            $user->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully'
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error deleting intern: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the intern'
+            ], 500);
+        }
     }
 }

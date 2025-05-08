@@ -7,35 +7,51 @@ use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CommentController extends BaseCommentController
 {
     public function store(Request $request, Task $task)
     {
-        // Ensure the task is assigned to the authenticated user
-        if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
-            abort(403);
+        try {
+            // Ensure the task is assigned to the authenticated user
+            if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
+                abort(403);
+            }
+
+            $validated = $this->validateComment($request);
+            
+            $comment = $this->createComment(
+                $task,
+                'intern',
+                Auth::guard('user')->id(),
+                $validated['comment']
+            );
+
+            return redirect()->back()->with('success', 'Comment added successfully.');
+        } catch (Exception $e) {
+            Log::error('Error storing intern comment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while adding the comment. Please try again.')
+                ->withInput();
         }
-
-        $validated = $this->validateComment($request);
-        
-        $comment = $this->createComment(
-            $task,
-            'intern',
-            Auth::guard('user')->id(),
-            $validated['comment']
-        );
-
-        return redirect()->back()->with('success', 'Comment added successfully.');
     }
 
     public function destroy(Task $task, Comment $comment)
     {
-        // Interns can only delete their own comments
-        if ($comment->user_type !== 'intern' || $comment->user_id !== Auth::guard('user')->id()) {
-            abort(403);
-        }
+        try {
+            // Interns can only delete their own comments
+            if ($comment->user_type !== 'intern' || $comment->user_id !== Auth::guard('user')->id()) {
+                abort(403);
+            }
 
-        return $this->deleteComment($comment);
+            return $this->deleteComment($comment);
+        } catch (Exception $e) {
+            Log::error('Error deleting intern comment: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the comment'
+            ], 500);
+        }
     }
 }

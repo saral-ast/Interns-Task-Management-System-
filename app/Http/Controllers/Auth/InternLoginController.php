@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\InternLoginRequest;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class InternLoginController extends Controller
 {
@@ -14,7 +15,12 @@ class InternLoginController extends Controller
      */
     public function index()
     {
-        return view('auth.internLogin');
+        try {
+            return view('auth.internLogin');
+        } catch (Exception $e) {
+            Log::error('Error displaying intern login page: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred. Please try again.');
+        }
     }
 
     public function login(InternLoginRequest $request){
@@ -31,10 +37,11 @@ class InternLoginController extends Controller
              }
              return redirect()->route('intern.login')->with('error','Invalid credentials');
         } catch (Exception $e) {
-             throw $e;
+            Log::error('Error during intern login: ' . $e->getMessage());
+            return redirect()->route('intern.login')
+                ->withInput($request->only('email'))
+                ->with('error', 'An error occurred during login. Please try again.');
         }
-        
-        
     }
 
      public function logout(){
@@ -43,7 +50,8 @@ class InternLoginController extends Controller
             Auth::guard('user')->logout();
             return redirect()->route('intern.login');
         } catch (Exception $e) {
-            throw $e;
+            Log::error('Error during intern logout: ' . $e->getMessage());
+            return redirect()->route('intern.login')->with('error', 'An error occurred during logout. Please try again.');
         }
     }
 }
