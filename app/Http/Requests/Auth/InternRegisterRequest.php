@@ -21,11 +21,17 @@ class InternRegisterRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        $rules = [
+            'name' => 'required|string|max:255',
         ];
+
+        if($this->isMethod('post')) {
+            $rules['email'] = 'required|string|email|max:255|unique:users';
+            $rules['password'] = 'required|string|min:8|confirmed';
+        }
+
+        return $rules;
+        
     }
     
     /**
@@ -33,14 +39,19 @@ class InternRegisterRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
+        $messages = [
             'name.required' => 'Please enter your name',
-            'email.required' => 'Please enter your email address',
-            'email.email' => 'Please enter a valid email address',
-            'email.unique' => 'This email is already registered',
-            'password.required' => 'Please enter a password',
-            'password.min' => 'Password must be at least 8 characters',
-            'password.confirmed' => 'Password confirmation does not match',
+            
         ];
+
+        if($this->isMethod('post')) {
+            $messages['email.required'] = 'Please enter your email address';
+            $messages['email.email'] = 'Please enter a valid email address';
+            $messages['email.unique'] = 'This email is already registered';
+            $messages['password.required'] = 'Please enter a password';
+            $messages['password.confirmed'] = 'Password confirmation does not match';
+        }
+
+        return $messages;
     }
 } 

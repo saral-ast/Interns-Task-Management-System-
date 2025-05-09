@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Admin;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\RolePermssion;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -29,7 +30,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create admin user with admin role
-        Admin::factory()->create([
+       $admin = Admin::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
@@ -55,5 +56,14 @@ class DatabaseSeeder extends Seeder
             Permission::create(['permission' => 'update_admins']),
             Permission::create(['permission' => 'delete_admins'])
         ];
+
+        //assigned all permision to the super_admin
+        foreach ($permissions as $permission) {
+            RolePermssion::create([
+                'admin_id' => $admin->id,
+                'permission_id' => $permission->id
+            ]);
+        }
+       
     }
 }

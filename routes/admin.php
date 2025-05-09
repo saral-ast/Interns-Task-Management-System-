@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\UserController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {

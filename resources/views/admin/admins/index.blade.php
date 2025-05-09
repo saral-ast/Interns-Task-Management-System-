@@ -58,16 +58,20 @@
                                                 </td>
                                                 <td class="px-6 py-4">
                                                     <div class="flex items-center space-x-3">
+                                                        @if($admin->role->name !== 'super_admin')
                                                         <a href="{{ route('admin.admins.edit', $admin) }}" 
                                                            class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
                                                             Edit | &nbsp;
                                                         </a>
-                                                        <button type="button"
+                                                        @if (Auth::user()->email !== $admin->email)
+                                                             <button type="button"
                                                                 class="text-sm font-medium text-red-600 hover:text-red-900 delete-admin"
                                                                 data-id="{{ $admin->id }}"
                                                                 data-url="{{ route('admin.admins.destroy', $admin) }}">
                                                             Delete
                                                         </button>
+                                                        @endif
+                                                        @endif
                                                     </div>
                                                 </td>
                                             </tr>

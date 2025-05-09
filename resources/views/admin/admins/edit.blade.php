@@ -4,69 +4,58 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 lg:p-8 bg-white border-b border-gray-200">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex text-center items-center mb-6">
                             <h1 class="text-2xl font-medium text-gray-900">
-                                Update Administrator
+                                Edit Administrator
                             </h1>
-                            <a href="{{ route('admin.admins') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-400 focus:ring ring-gray-200 disabled:opacity-25 transition ease-in-out duration-150">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                                </svg>
-                                Back to List
-                            </a>
                         </div>
 
-                        <x-forms.form method="POST" action="{{ route('admin.admins.update', $admin) }}" class="mt-6 space-y-6" id="adminEditForm">
+                        <x-forms.form method="POST" action="{{ route('admin.admins.update', $admin->id) }}" class="mt-6 space-y-6" id="adminEditForm">
+                            @csrf
                             @method('PUT')
                             <div class="space-y-4">
                                 <x-forms.input 
                                     name="name" 
                                     label="Full Name" 
-                                    type="text"
-                                    value="{{ old('name', $admin->name) }}" 
+                                    type="text" 
                                     required 
                                     placeholder="Enter administrator name"
+                                    value="{{ old('name', $admin->name) }}"
                                     autocomplete="name"
                                 />
-                                
+
                                 <x-forms.input 
                                     name="email" 
                                     label="Email Address" 
                                     type="email" 
-                                    value="{{ old('email', $admin->email) }}"
                                     required 
+                                    disabled
                                     placeholder="Enter administrator email"
+                                    value="{{ old('email', $admin->email) }}"
                                     autocomplete="email"
                                 />
-                                
-                                <x-forms.input 
-                                    name="password" 
-                                    label="Password" 
-                                    type="password" 
-                                    placeholder="Enter new password (leave empty to keep current)"
-                                    autocomplete="new-password"
-                                />
-                                
-                                <x-forms.input 
-                                    name="password_confirmation" 
-                                    label="Confirm Password" 
-                                    type="password" 
-                                    placeholder="Confirm new password"
-                                    autocomplete="new-password"
-                                />
                             </div>
-                           
-                            <div class="space-y-4">
+
+                            <div class="space-y-4 mt-6">
                                 <label class="block font-medium text-base text-gray-700">Permissions</label>
+
+                                <x-forms.checkbox 
+                                    name="select_all" 
+                                    value="1" 
+                                    id="select_all_permissions"
+                                    label="Select All Permissions"
+                                    :checked="count($permissions) === count($adminPermissions)"
+                                />
+
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     @foreach($permissions as $permission)
-                                     {{-- @dd(in_array( $permission->id, $adminPermissions)) --}}
                                         <x-forms.checkbox 
                                             name="permissions[]" 
                                             value="{{ $permission->id }}" 
                                             id="permission_{{ $permission->id }}"
                                             label="{{ ucwords(str_replace('_', ' ', $permission->permission)) }}"
-                                            checked="{{ in_array($permission->id, $adminPermissions) }}"
+                                            :checked="in_array($permission->id, old('permissions', $adminPermissions))"
+                                            class="permission-checkbox"
                                         />
                                     @endforeach
                                 </div>
@@ -88,19 +77,11 @@
             </div>
         </div>
     </x-navigation>
-</x-layout>
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if jQuery is loaded
-        if (typeof jQuery === 'undefined') {
-            console.error('jQuery is not loaded');
-            return;
-        }
-
-        // Initialize form validation
-        $('#adminEditForm').validate({
+    @push('scripts')
+    <script>
+        $(document).ready(function () {
+             $('#adminEditForm').validate({
             rules: {
                 name: {
                     required: true,
@@ -150,6 +131,17 @@
                 $(element).removeClass('border-red-500').addClass('border-gray-300');
             }
         });
-    });
-</script>
-@endpush
+       
+            $('#select_all_permissions').on('change', function () {
+                const checked = $(this).is(':checked');
+                $('.permission-checkbox').prop('checked', checked);
+            });
+
+            $('.permission-checkbox').on('change', function () {
+                const allChecked = $('.permission-checkbox').length === $('.permission-checkbox:checked').length;
+                $('#select_all_permissions').prop('checked', allChecked);
+            });
+        });
+    </script>
+    @endpush
+</x-layout>

@@ -93,17 +93,16 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(InternRegisterRequest $request, User $user)
     {
         try {
-            $user->name = $request->name;
-            $user->email = $request->email;
+            $validated = $request->validated();
 
             if (!empty($request->password)) {
-                $user->password = bcrypt($request->password);
+                $user->password = bcrypt($validated['password']);
             }
 
-            $user->save();
+            $user->update($validated);
 
             return redirect()->route('admin.interns')->with('success', 'Intern updated successfully.');
         } catch (Exception $e) {

@@ -5,11 +5,13 @@
     use App\Http\Controllers\Controller;
     use App\Http\Requests\Admin\AdminRequest;
     use App\Models\Admin;
-    use Illuminate\Http\Request;
+    use App\Models\Permission;
+    use App\Models\RolePermssion;
     use Illuminate\Support\Facades\Auth;
-    use Illuminate\Support\Facades\Hash;
     use Exception;
     use Illuminate\Support\Facades\Log;
+    use Illuminate\Support\Facades\DB;
+
 
     class AdminControllers extends Controller
     {
@@ -27,7 +29,7 @@
 
         public function create() {
             try {
-                $permissions = \App\Models\Permission::all();
+                $permissions = Permission::all();
                 return view('admin.admins.create', [
                     'permissions' => $permissions
                 ]);
@@ -42,17 +44,12 @@
                 $credentials = $request->validated();
                 $credentials['password'] =bcrypt($credentials['password']);
                 $credentials['role_id'] = 2;
+                DB::beginTransaction();
                 $admin = Admin::create($credentials);
 
                 // Get all permissions and create role permission entries
-                $permissions = \App\Models\Permission::all();
-                if ($request->has('permissions')) {
-                    foreach ($request->permissions as $permissionId) {
-                    \App\Models\RolePermssion::create([
-                            'admin_id' => $admin->id,
-                            'permission_id' => $permissionId
-                        ]);
-                }}
+                $admin->rolePermissions()->attach($request->permissions);
+                DB::commit();
 
                 return redirect()->route('admin.admins')->with('success', 'Administrator created successfully with all permissions.');
             } catch (Exception $e) {
@@ -64,8 +61,11 @@
 
         public function edit(Admin $admin) {
             try {
-                $permissions = \App\Models\Permission::all();
-                $adminPermissions = \App\Models\RolePermssion::where('admin_id', $admin->id)
+                if($admin->role->name == 'super_admin') {
+                    return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
+                }
+                $permissions = Permission::all();
+                $adminPermissions = RolePermssion::where('admin_id', $admin->id)
                     ->pluck('permission_id')
                     ->toArray();
                 // dd($adminPermissions, $permissions);
@@ -81,28 +81,23 @@
             }
         }
 
-        public function update(Request $request, Admin $admin) {
+        public function update(AdminRequest $request, Admin $admin) {
             try {
-                $admin->name = $request->name;
-                $admin->email = $request->email;
+                $credentials = $request->validated();
                 
+                DB::beginTransaction();
                 if($request->password) {
-                    $admin->password = bcrypt($request->password);
+                    $credentials['password'] = bcrypt($request->password);
                 }
-                $admin->save();
-
-                // Update permissions
-                \App\Models\RolePermssion::where('admin_id', $admin->id)->delete();
                 
-                if($request->has('permissions')) {
-                    foreach($request->permissions as $permissionId) {
-                        \App\Models\RolePermssion::create([
-                            'admin_id' => $admin->id,
-                            'permission_id' => $permissionId
-                        ]);
-                    }
+                $admin->update($credentials);
+                if(Auth::user()->password !== $admin->password) {
+                    $admin->logout();
                 }
-
+                // Update permissions
+                $admin->rolePermissions()->detach();
+                $admin->rolePermissions()->attach($request->permissions);
+                DB::commit();
                 return redirect()->route('admin.admins')->with('success', 'Administrator updated successfully with selected permissions.');
             } catch (Exception $e) {
                 Log::error('Error updating admin: ' . $e->getMessage());
@@ -114,8 +109,10 @@
         public function destroy(Admin $admin)
         {
             try {
-                $adminPermissions = \App\Models\RolePermssion::where('admin_id', $admin->id)->delete();
+                DB::beginTransaction();
+                $adminPermissions = RolePermssion::where('admin_id', $admin->id)->delete();
                 $admin->delete();
+                DB::commit();
                 
                 return response()->json([
                     'success' => true,

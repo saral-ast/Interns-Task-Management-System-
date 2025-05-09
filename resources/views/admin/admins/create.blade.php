@@ -22,7 +22,7 @@
                                     value="{{ old('name') }}"
                                     autocomplete="name"
                                 />
-                                
+
                                 <x-forms.input 
                                     name="email" 
                                     label="Email Address" 
@@ -32,7 +32,7 @@
                                     value="{{ old('email') }}"
                                     autocomplete="email"
                                 />
-                                
+
                                 <x-forms.input 
                                     name="password" 
                                     label="Password" 
@@ -42,7 +42,7 @@
                                     autocomplete="new-password"
                                     id="password"
                                 />
-                                
+
                                 <x-forms.input 
                                     name="password_confirmation" 
                                     label="Confirm Password" 
@@ -56,12 +56,12 @@
                             <div class="space-y-4 mt-6">
                                 <label class="block font-medium text-base text-gray-700">Permissions</label>
 
-                                <!-- Select All Checkbox (unchecked by default) -->
                                 <x-forms.checkbox 
                                     name="select_all" 
                                     value="1" 
                                     id="select_all_permissions"
                                     label="Select All Permissions"
+                                    :checked="false"
                                 />
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -71,6 +71,7 @@
                                             value="{{ $permission->id }}" 
                                             id="permission_{{ $permission->id }}"
                                             label="{{ ucwords(str_replace('_', ' ', $permission->permission)) }}"
+                                            :checked="in_array($permission->id, old('permissions', []))"
                                             class="permission-checkbox"
                                         />
                                     @endforeach
@@ -96,13 +97,7 @@
 
     @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof jQuery === 'undefined') {
-                console.error('jQuery is not loaded');
-                return;
-            }
-
-            // Form validation
+        $(document).ready(function () {
             $('#adminCreateForm').validate({
                 rules: {
                     name: {
@@ -154,14 +149,12 @@
                     $(element).removeClass('border-red-500').addClass('border-gray-300');
                 }
             });
-
-            // Select/Deselect all permissions
             $('#select_all_permissions').on('change', function () {
                 const checked = $(this).is(':checked');
                 $('.permission-checkbox').prop('checked', checked);
             });
 
-            $(document).on('change', '.permission-checkbox', function () {
+            $('.permission-checkbox').on('change', function () {
                 const allChecked = $('.permission-checkbox').length === $('.permission-checkbox:checked').length;
                 $('#select_all_permissions').prop('checked', allChecked);
             });

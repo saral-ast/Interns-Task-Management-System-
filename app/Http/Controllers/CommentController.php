@@ -13,7 +13,7 @@ class CommentController extends Controller
     protected function validateComment(Request $request)
     {
         try {
-            return $request->validate([
+            return $request->validate(rules: [
                 'comment' => 'required|string|max:1000'
             ]);
         } catch (Exception $e) {

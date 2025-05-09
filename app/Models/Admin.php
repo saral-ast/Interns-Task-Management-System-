@@ -22,7 +22,8 @@ class Admin extends Authenticatable
     public function rolePermissions()
     { 
         // Admin now has a many-to-many relationship with Permission through the 'role_permssions' table
-        return $this->belongsToMany(Permission::class, 'role_permssions', 'admin_id', 'permission_id');
+        return $this->belongsToMany(Permission::class, 'role_permssions', 'admin_id', 'permission_id')
+                    ->withTimestamps();
     }
 
     // Check if Admin has a certain permission
