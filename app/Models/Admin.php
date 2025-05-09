@@ -12,6 +12,11 @@ class Admin extends Authenticatable
 
     protected $guarded = [];
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class,'created_by');
+    }
+
     public function role()
     { 
         // Assuming admin has a one-to-many relationship with Role

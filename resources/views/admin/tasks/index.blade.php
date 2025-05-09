@@ -10,7 +10,7 @@
                                 <h2 class="text-2xl font-bold text-gray-900">Task Management</h2>
                                 <p class="text-sm text-gray-600 mt-1">View and manage all system tasks</p>
                             </div>
-                            @can('create_task')
+                            @can('create_tasks')
                             <a href="{{ route('admin.tasks.create') }}" 
                                class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

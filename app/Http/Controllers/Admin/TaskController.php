@@ -15,7 +15,7 @@ class TaskController extends Controller
 {
     public function index() {
         try {
-            $tasks = Task::with('assignedUsers')->get();
+            $tasks = Auth::guard('admin')->user()->tasks;
             return view('admin.tasks.index',[
                 'tasks' => $tasks
             ]);
