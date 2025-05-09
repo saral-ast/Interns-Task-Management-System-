@@ -62,5 +62,6 @@ function initializeEcho() {
         });
     } catch (error) {
         // Silently handle errors
+        console.error("Error initializing Echo:", error);
     }
 }

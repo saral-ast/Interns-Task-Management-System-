@@ -85,7 +85,8 @@
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                                             </svg>
                                                         </a>
-                                                        @can('delete_task')
+                
+                                                        @can('delete_tasks')
                                                         <button type="button"
                                                                 class="text-sm font-medium text-red-600 hover:text-red-900 delete-task"
                                                                 data-id="{{ $task->id }}"
