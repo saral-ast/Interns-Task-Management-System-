@@ -91,9 +91,7 @@
                 }
                 
                 $admin->update($credentials);
-                if(Auth::user()->password !== $admin->password) {
-                    $admin->logout();
-                }
+                
                 // Update permissions
                 $admin->rolePermissions()->detach();
                 $admin->rolePermissions()->attach($request->permissions);
@@ -110,7 +108,7 @@
         {
             try {
                 DB::beginTransaction();
-                $adminPermissions = RolePermssion::where('admin_id', $admin->id)->delete();
+                RolePermssion::where('admin_id', $admin->id)->delete();
                 $admin->delete();
                 DB::commit();
                 

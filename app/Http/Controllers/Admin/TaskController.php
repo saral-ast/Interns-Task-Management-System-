@@ -10,12 +10,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
     public function index() {
         try {
-            $tasks = Auth::guard('admin')->user()->tasks;
+            $tasks = Auth::guard('admin')->user()
+                ->tasks()
+                ->with([
+                    'assignedUsers',
+                    'creator'
+                ])
+                ->get();
+                
             return view('admin.tasks.index',[
                 'tasks' => $tasks
             ]);
@@ -59,9 +67,20 @@ class TaskController extends Controller
 
     public function edit(Task $task) {
         try {
+            // Load task with all necessary relationships in a single query
+            $taskWithRelations = Task::with([
+                'assignedUsers',
+                'comments' => function($query) {
+                    $query->orderBy('created_at', 'desc');
+                },
+                'comments.user' // Eager load the comment user (polymorphic)
+            ])->findOrFail($task->id);
+            
+            // Load all users for the form dropdown
             $users = User::all();
-            return view('admin.tasks.edit',[
-                'task' => $task->load('assignedUsers'),
+            
+            return view('admin.tasks.edit', [
+                'task' => $taskWithRelations,
                 'users' => $users
             ]);
         } catch (Exception $e) {
@@ -73,11 +92,20 @@ class TaskController extends Controller
     public function update(TaskRequest $request, Task $task) {
         try {
             $validated = $request->validated();
-            $task->update($validated);
             
-            if(isset($validated['assigned_users'])) {
-                $task->assignedUsers()->sync($validated['assigned_users']);
-            }
+            // Update task attributes and assigned users in a transaction
+            DB::transaction(function() use ($task, $validated) {
+                // Update task attributes
+                $task->update($validated);
+                
+                // Use syncWithoutDetaching if you only want to add relationships without removing existing ones
+                // Or use sync with the exact array of IDs when you want to add and remove relationships
+                if(isset($validated['assigned_users'])) {
+                    // When we know exactly which users should be attached, sync is more efficient
+                    // than separate attach/detach operations
+                    $task->assignedUsers()->sync($validated['assigned_users'], false);
+                }
+            });
             
             return redirect()->route('admin.tasks')->with('success', 'Task updated successfully.');
         } catch (Exception $e) {

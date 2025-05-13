@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Events\MessageSent;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class MessageController extends Controller
 {
@@ -20,16 +21,48 @@ class MessageController extends Controller
             $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
             $userType = $isAdmin ? 'admin' : 'intern';
 
-            // Get all admins and interns with unread message counts
-            $admins = Admin::all()->map(function($admin) use ($userType, $user) {
-                $admin->unread_count = Message::unreadCount($userType, $user->id, 'admin', $admin->id);
-                return $admin;
-            });
+            // Get all admins with eager loading
+            $admins = Admin::all();
+            $interns = User::all();
             
-            $interns = User::all()->map(function($intern) use ($userType, $user) {
-                $intern->unread_count = Message::unreadCount($userType, $user->id, 'intern', $intern->id);
-                return $intern;
-            });
+            // Get all unread message counts in a single query for better performance
+            if ($isAdmin) {
+                // Get unread counts for all admin's conversations in a single query
+                $adminUnreadCounts = Message::whereNull('read_at')
+                    ->where('receiver_type', $userType)
+                    ->where('receiver_id', $user->id)
+                    ->select('sender_type', 'sender_id', DB::raw('count(*) as unread_count'))
+                    ->groupBy('sender_type', 'sender_id')
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return $item->sender_type . '_' . $item->sender_id;
+                    });
+                
+                // Attach counts to admin and intern collections
+                $admins->each(function($admin) use ($adminUnreadCounts) {
+                    $key = 'admin_' . $admin->id;
+                    $admin->unread_count = $adminUnreadCounts->has($key) ? $adminUnreadCounts[$key]->unread_count : 0;
+                });
+                
+                $interns->each(function($intern) use ($adminUnreadCounts) {
+                    $key = 'intern_' . $intern->id;
+                    $intern->unread_count = $adminUnreadCounts->has($key) ? $adminUnreadCounts[$key]->unread_count : 0;
+                });
+            } else {
+                // For interns, only get counts for admin conversations
+                $internUnreadCounts = Message::whereNull('read_at')
+                    ->where('receiver_type', $userType)
+                    ->where('receiver_id', $user->id)
+                    ->where('sender_type', 'admin')
+                    ->select('sender_id', DB::raw('count(*) as unread_count'))
+                    ->groupBy('sender_id')
+                    ->get()
+                    ->keyBy('sender_id');
+                
+                $admins->each(function($admin) use ($internUnreadCounts) {
+                    $admin->unread_count = $internUnreadCounts->has($admin->id) ? $internUnreadCounts[$admin->id]->unread_count : 0;
+                });
+            }
 
             return view('chat.index', [
                 'admins' => $admins,
@@ -129,17 +162,33 @@ class MessageController extends Controller
             
             $unreadCounts = [];
             
+            // Get all unread message counts in a single query
             if ($isAdmin) {
-                // Get counts for all interns
-                $interns = User::all();
-                foreach ($interns as $intern) {
-                    $unreadCounts['intern_' . $intern->id] = Message::unreadCount($userType, $user->id, 'intern', $intern->id);
+                // Fetch all unread counts for the admin in a single query
+                $counts = Message::whereNull('read_at')
+                    ->where('receiver_type', $userType)
+                    ->where('receiver_id', $user->id)
+                    ->select('sender_type', 'sender_id', DB::raw('count(*) as count'))
+                    ->groupBy('sender_type', 'sender_id')
+                    ->get();
+                
+                // Convert to the expected format
+                foreach ($counts as $row) {
+                    $unreadCounts[$row->sender_type . '_' . $row->sender_id] = $row->count;
                 }
             } else {
-                // Get counts for all admins
-                $admins = Admin::all();
-                foreach ($admins as $admin) {
-                    $unreadCounts['admin_' . $admin->id] = Message::unreadCount($userType, $user->id, 'admin', $admin->id);
+                // For interns, only fetch admin counts
+                $counts = Message::whereNull('read_at')
+                    ->where('receiver_type', $userType)
+                    ->where('receiver_id', $user->id)
+                    ->where('sender_type', 'admin')
+                    ->select('sender_id', DB::raw('count(*) as count'))
+                    ->groupBy('sender_id')
+                    ->get();
+                
+                // Convert to the expected format
+                foreach ($counts as $row) {
+                    $unreadCounts['admin_' . $row->sender_id] = $row->count;
                 }
             }
             

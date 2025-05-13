@@ -17,4 +17,3 @@ Route::get('/', function() {
     }
     return redirect()->route('intern.login');
 })->name('home');
-

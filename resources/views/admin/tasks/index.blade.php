@@ -45,8 +45,10 @@
                                                     <div class="text-sm text-gray-600 truncate max-w-xs">{{ $task->description }}</div>
                                                 </td>
                                                 <td class="px-6 py-4">
+                                                    {{-- @dd($task->status) --}}
                                                     <span class="px-3 py-1 text-sm font-medium rounded-full
                                                         @if($task->status === 'completed') bg-green-100 text-green-800
+                                                        {{--    @elseif($task->status === 'cancelled') bg-red-100 text-red-800 --}}
                                                         @elseif($task->status === 'in_progress') bg-yellow-100 text-yellow-800
                                                         @else bg-gray-100 text-gray-800
                                                         @endif">
@@ -123,8 +125,8 @@
         $(document).ready(function() {
             $('.delete-task').click(function(e) {
                 e.preventDefault();
-                var taskId = $(this).data('id');
-                var deleteUrl = $(this).data('url');
+                let taskId = $(this).data('id');
+                let deleteUrl = $(this).data('url');
 
                 Swal.fire({
                     title: 'Are you sure?',
