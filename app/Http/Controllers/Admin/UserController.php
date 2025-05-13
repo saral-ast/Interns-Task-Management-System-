@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -17,8 +18,13 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::all();
-            // dd($users);
+            // $users = User::with('role')->paginate(10);
+            // Using join instead of eager loading
+            $users = DB::table('users')
+                ->select('users.id', 'users.name', 'users.email', 'users.role_id', 'users.created_at', 'roles.name as role_name')
+                ->join('roles', 'users.role_id', '=', 'roles.id')
+                ->paginate(15);
+                
             return view('admin.users.index', [
                 'users' => $users
             ]);
@@ -67,13 +73,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
 
     /**
      * Show the form for editing the specified resource.

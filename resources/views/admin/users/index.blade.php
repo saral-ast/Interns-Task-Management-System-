@@ -50,11 +50,11 @@
                                                 </td>
                                                 <td class="px-6 py-4">
                                                     <span class="px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 text-indigo-800">
-                                                        {{ $user->role->name }}
+                                                        {{ $user->role_name }}
                                                     </span>
                                                 </td>
                                                 <td class="px-6 py-4">
-                                                    <div class="text-sm text-gray-500">{{ $user->created_at->format('M d, Y') }}</div>
+                                                    <div class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($user->created_at)->format('M d, Y') }}</div>
                                                 </td>
                                                 <td class="px-6 py-4">
                                                     <div class="flex items-center space-x-3">
@@ -79,6 +79,7 @@
                     </div>
                 </div>
             </div>
+            {{ $users->links() }}
         </div>
     </x-navigation>
 
