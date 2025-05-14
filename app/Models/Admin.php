@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 
 class Admin extends Authenticatable
 {
@@ -16,7 +17,7 @@ class Admin extends Authenticatable
     protected $permissionsLoaded = false;
     protected $loadedPermissions = [];
     
-    // Always eager load these relationships
+    // Eager load role by default
     protected $with = ['role'];
 
     public function tasks()
@@ -39,12 +40,12 @@ class Admin extends Authenticatable
     // Check if Admin has a certain permission
     public function hasPermission($permission)
     { 
-        // Super admin check
+        // Super admin check - use the loaded role relation
         if ($this->isAdmin()) { 
             return true; 
         }
         
-        // Load all permissions at once if not loaded yet
+        // Load all permissions at once if not loaded yet - reduces database roundtrips
         if (!$this->permissionsLoaded) {
             $this->loadAllPermissions();
         }
@@ -53,24 +54,32 @@ class Admin extends Authenticatable
         return in_array($permission, $this->loadedPermissions);
     }
     
-    // Load all permissions at once
+    // Load all permissions at once with a more efficient query
     public function loadAllPermissions()
     {
-        $this->loadedPermissions = $this->rolePermissions()
+        // Direct SQL query to fetch permissions more efficiently
+        $permissions = DB::table('permissions')
+            ->join('role_permssions', 'permissions.id', '=', 'role_permssions.permission_id')
+            ->where('role_permssions.admin_id', $this->id)
             ->pluck('permission')
             ->toArray();
+            
+        $this->loadedPermissions = $permissions;
         $this->permissionsLoaded = true;
+        
+        return $this;
     }
 
     // Check if Admin is a super admin (id=1)
     public function isAdmin()
     { 
-        // Use eager loaded role if available
+        // Always use eager loaded role if available to avoid database query
         if ($this->relationLoaded('role')) {
             return $this->role->id === 1;
         }
         
-        // Otherwise query the database
-        return $this->role()->where('id', 1)->exists();
+        // If role is not loaded, load it and check
+        $this->load('role');
+        return $this->role->id === 1;
     }
 }

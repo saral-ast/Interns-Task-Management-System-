@@ -21,9 +21,9 @@ class MessageController extends Controller
             $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
             $userType = $isAdmin ? 'admin' : 'intern';
 
-            // Get all admins with eager loading
-            $admins = Admin::all();
-            $interns = User::all();
+            // Get all admins and interns with eager loading of roles in a single query
+            $admins = Admin::with('role')->get();
+            $interns = User::with('role')->get();
             
             // Get all unread message counts in a single query for better performance
             if ($isAdmin) {

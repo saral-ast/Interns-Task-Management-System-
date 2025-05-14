@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
         Route::middleware("guest:admin")->group(function() {
-                Route::get('/login',[AdminLoginController::class,'index'])->name('admin.login');
-                Route::post('/login',[AdminLoginController::class,'login'])->name('admin.authenticate');
+              Route::controller(AdminLoginController::class)->group(function(){
+                Route::get('/login', 'index')->name('admin.login');
+                Route::post('/login', 'login')->name('admin.authenticate');
+              });
         });
 
         Route::middleware(["auth:admin", PreloadAdmin::class])->group(function() {
@@ -22,19 +24,30 @@ Route::prefix('admin')->group(function () {
             
             
             // Admin user management routes
-            Route::get('/users', [UserController::class, 'index'])->name('admin.interns')->can('read_interns');
-            Route::get('/users/create', [UserController::class, 'create'])->name('admin.users.create')->can('create_interns');
-            Route::post('/users', [UserController::class, 'store'])->name('admin.interns.store')->can('create_interns');
-            Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('admin.interns.edit')->can('update_interns');
-            Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.interns.update')->can('update_interns');
-            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.interns.destroy')->can('delete_interns');
+            Route::controller(UserController::class)->prefix('users')->group(function(){
+                Route::get('/', 'index')->name('admin.interns')->can('read_interns');
+                Route::get('/create', 'create')->name('admin.users.create')->can('create_interns');
+                Route::post('/', 'store')->name('admin.interns.store')->can('create_interns');
+                Route::get('/{user}/edit', 'edit')->name('admin.interns.edit')->can('update_interns');
+                Route::put('/{user}', 'update')->name('admin.interns.update')->can('update_interns');
+                Route::delete('/{user}', 'destroy')->name('admin.interns.destroy')->can('delete_interns');
+            });
 
-            Route::get('/admins',[AdminControllers::class,'index'])->name('admin.admins')->can('read_admins'); 
-            Route::get('/admin/create', [AdminControllers::class,'create'])->name('admin.admins.create')->can('create_admins'); 
-            Route::post('/admin', [AdminControllers::class,'store'])->name('admin.admins.store')->can('create_admins');
-            Route::get('/admin/{admin}/edit', [AdminControllers::class, 'edit'])->name('admin.admins.edit')->can('update_admins');
-            Route::put('/admin/{admin}', [AdminControllers::class, 'update'])->name('admin.admins.update')->can('update_admins');
-            Route::delete('/admin/{admin}', [AdminControllers::class, 'destroy'])->name('admin.admins.destroy')->can('delete_admins'); 
+            Route::controller(AdminControllers::class)->prefix('admins')->group(function(){
+                Route::get('/', 'index')->name('admin.admins')->can('read_admins'); 
+                Route::get('/create', 'create')->name('admin.admins.create')->can('create_admins'); 
+                Route::post('/', 'store')->name('admin.admins.store')->can('create_admins');
+                Route::get('/{admin}/edit', 'edit')->name('admin.admins.edit')->can('update_admins');
+                Route::put('/{admin}', 'update')->name('admin.admins.update')->can('update_admins');
+                Route::delete('/{admin}', 'destroy')->name('admin.admins.destroy')->can('delete_admins'); 
+            });
+
+        //     Route::get('/admins',[AdminControllers::class,'index'])->name('admin.admins')->can('read_admins'); 
+        //     Route::get('/admin/create', [AdminControllers::class,'create'])->name('admin.admins.create')->can('create_admins'); 
+        //     Route::post('/admin', [AdminControllers::class,'store'])->name('admin.admins.store')->can('create_admins');
+        //     Route::get('/admin/{admin}/edit', [AdminControllers::class, 'edit'])->name('admin.admins.edit')->can('update_admins');
+        //     Route::put('/admin/{admin}', [AdminControllers::class, 'update'])->name('admin.admins.update')->can('update_admins');
+        //     Route::delete('/admin/{admin}', [AdminControllers::class, 'destroy'])->name('admin.admins.destroy')->can('delete_admins'); 
             
             // Admin task management routes
             Route::get('/tasks', [TaskController::class, 'index'])->name('admin.tasks')->can('read_tasks');
