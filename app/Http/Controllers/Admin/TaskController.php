@@ -50,16 +50,17 @@ class TaskController extends Controller
             $validated = $request->validated();
             $admin = Auth::guard('admin')->user();
             $validated['created_by'] = $admin->id;
-            
+            DB::beginTransaction();
             $task = Task::create($validated);
             
-            if(isset($validated['assigned_users'])) {
+            if($task) {
                 $task->assignedUsers()->attach($validated['assigned_users']);
             }
-
+            DB::commit();
             return redirect()->route('admin.tasks')->with('success', 'Task created successfully.');
         } catch (Exception $e) {
             Log::error('Error creating task: ' . $e->getMessage());
+            DB::rollBack();
             return redirect()->back()->with('error', 'An error occurred while creating the task. Please try again.')
                 ->withInput();
         }
@@ -100,16 +101,18 @@ class TaskController extends Controller
                 
                 // Use syncWithoutDetaching if you only want to add relationships without removing existing ones
                 // Or use sync with the exact array of IDs when you want to add and remove relationships
-                if(isset($validated['assigned_users'])) {
+                if($task) {
                     // When we know exactly which users should be attached, sync is more efficient
                     // than separate attach/detach operations
                     $task->assignedUsers()->sync($validated['assigned_users'], false);
                 }
             });
             
+            DB::commit();
             return redirect()->route('admin.tasks')->with('success', 'Task updated successfully.');
         } catch (Exception $e) {
             Log::error('Error updating task: ' . $e->getMessage());
+            DB::rollBack();
             return redirect()->back()->with('error', 'An error occurred while updating the task. Please try again.')
                 ->withInput();
         }
@@ -118,14 +121,17 @@ class TaskController extends Controller
     public function destroy(Task $task)
     {
         try {
+            DB::beginTransaction();
             $task->assignedUsers()->detach();
             $task->delete();
+            DB::commit();
             return response()->json([
                 'success' => true,
                 'message' => 'Task deleted successfully'
             ]);
         } catch (Exception $e) {
             Log::error('Error deleting task: ' . $e->getMessage());
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while deleting the task'

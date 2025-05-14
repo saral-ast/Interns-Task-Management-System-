@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Intern;
 
 use App\Http\Controllers\CommentController as BaseCommentController;
+use App\Http\Requests\CommentRequest;
 use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Http\Request;
@@ -12,17 +13,17 @@ use Illuminate\Support\Facades\Log;
 
 class CommentController extends BaseCommentController
 {
-    public function store(Request $request, Task $task)
+    public function store(CommentRequest $request, Task $task)
     {
         try {
             // Ensure the task is assigned to the authenticated user
             if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
-                abort(403);
+                return redirect()->back()->with('error', 'You are not authorized to add comments to this task.');
             }
 
-            $validated = $this->validateComment($request);
+            $validated = $request->validated();
             
-            $comment = $this->createComment(
+            $this->createComment(
                 $task,
                 'intern',
                 Auth::guard('user')->id(),
@@ -42,10 +43,12 @@ class CommentController extends BaseCommentController
         try {
             // Interns can only delete their own comments
             if ($comment->user_type !== 'intern' || $comment->user_id !== Auth::guard('user')->id()) {
-                abort(403);
+                return redirect()->back()->with('error', 'You are not authorized to delete this comment.');
             }
 
-            return $this->deleteComment($comment);
+            $this->deleteComment($comment);
+
+            return redirect()->back()->with('success', 'Comment deleted successfully.');
         } catch (Exception $e) {
             Log::error('Error deleting intern comment: ' . $e->getMessage());
             return response()->json([

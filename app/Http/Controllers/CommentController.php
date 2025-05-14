@@ -10,17 +10,17 @@ use Illuminate\Support\Facades\Log;
 
 class CommentController extends Controller
 {
-    protected function validateComment(Request $request)
-    {
-        try {
-            return $request->validate(rules: [
-                'comment' => 'required|string|max:1000'
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error validating comment: ' . $e->getMessage());
-            throw $e;
-        }
-    }
+    // protected function validateComment(Request $request)
+    // {
+    //     try {
+    //         return $request->validate(rules: [
+    //             'comment' => 'required|string|max:1000'
+    //         ]);
+    //     } catch (Exception $e) {
+    //         Log::error('Error validating comment: ' . $e->getMessage());
+    //         throw $e;
+    //     }
+    // }
 
     protected function createComment(Task $task, string $userType, int $userId, string $comment)
     {

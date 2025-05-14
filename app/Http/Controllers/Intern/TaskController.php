@@ -28,7 +28,7 @@ class TaskController extends Controller
         try {
             // Ensure the task is assigned to the authenticated user
             if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
-                abort(403);
+                return redirect()->back()->with('error', 'You are not authorized to view this task.');
             }
             return view('intern.tasks.show', ['task' => $task]);
         } catch (Exception $e) {

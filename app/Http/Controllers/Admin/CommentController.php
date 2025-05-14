@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\CommentController as BaseCommentController;
+use App\Http\Requests\CommentRequest;
 use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Http\Request;
@@ -12,12 +13,12 @@ use Illuminate\Support\Facades\Log;
 
 class CommentController extends BaseCommentController
 {
-    public function store(Request $request, Task $task)
+    public function store(CommentRequest $request, Task $task)
     {
         try {
-            $validated = $this->validateComment($request);
+            $validated = $request->validated();
             
-            $comment = $this->createComment(
+            $this->createComment(
                 $task,
                 'admin',
                 Auth::guard('admin')->id(),

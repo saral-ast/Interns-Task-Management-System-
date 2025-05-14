@@ -28,19 +28,9 @@ function initializeEcho() {
 
     try {
         // Try different methods to get Pusher credentials
-        const pusherKey =
-            // First try the PusherConfig from the blade template
-            (window.PusherConfig && window.PusherConfig.key) ||
-            // Then try Vite env variables
-            import.meta.env.VITE_PUSHER_APP_KEY ||
-            // Then try Mix env variables
-            process.env.MIX_PUSHER_APP_KEY;
+        const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
 
-        const pusherCluster =
-            (window.PusherConfig && window.PusherConfig.cluster) ||
-            import.meta.env.VITE_PUSHER_APP_CLUSTER ||
-            process.env.MIX_PUSHER_APP_CLUSTER ||
-            "ap2";
+        const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || "ap2";
 
         if (!pusherKey) {
             throw new Error("Pusher key is undefined");

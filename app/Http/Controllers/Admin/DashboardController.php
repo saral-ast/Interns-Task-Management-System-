@@ -28,8 +28,6 @@ class DashboardController extends Controller
             $latestTasks = $allTasks->sortByDesc('created_at')->take(5)->values();
 
             return view('admin.dashboard', [
-                'title' => 'Dashboard',
-                'subTitle' => 'Dashboard',
                 'tasks' => $allTasks,
                 'latestTasks' => $latestTasks,
                 'activeTasksCount' => $activeTasksCount,
@@ -39,8 +37,6 @@ class DashboardController extends Controller
         } catch (Exception $e) {
             Log::error('Error in admin dashboard: ' . $e->getMessage());
             return view('admin.dashboard', [
-                'title' => 'Dashboard',
-                'subTitle' => 'Dashboard',
                 'error' => 'An error occurred while loading the dashboard. Please try again.'
             ]);
         }

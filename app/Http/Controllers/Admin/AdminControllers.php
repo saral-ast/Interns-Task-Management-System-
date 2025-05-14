@@ -50,10 +50,12 @@
                 // Get all permissions and create role permission entries
                 $admin->rolePermissions()->attach($request->permissions);
                 DB::commit();
+                
 
                 return redirect()->route('admin.admins')->with('success', 'Administrator created successfully with all permissions.');
             } catch (Exception $e) {
                 Log::error('Error creating admin: ' . $e->getMessage());
+                DB::rollBack();
                 return redirect()->back()->with('error', 'An error occurred while creating the administrator. Please try again.')
                     ->withInput($request->except('password'));
             }
@@ -99,6 +101,7 @@
                 return redirect()->route('admin.admins')->with('success', 'Administrator updated successfully with selected permissions.');
             } catch (Exception $e) {
                 Log::error('Error updating admin: ' . $e->getMessage());
+                DB::rollBack();
                 return redirect()->back()->with('error', 'An error occurred while updating the administrator. Please try again.')
                     ->withInput($request->except('password'));
             }
@@ -118,6 +121,7 @@
                 ]);
             } catch (Exception $e) {
                 Log::error('Error deleting admin: ' . $e->getMessage());
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'An error occurred while deleting the administrator'
