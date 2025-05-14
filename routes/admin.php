@@ -42,20 +42,15 @@ Route::prefix('admin')->group(function () {
                 Route::delete('/{admin}', 'destroy')->name('admin.admins.destroy')->can('delete_admins'); 
             });
 
-        //     Route::get('/admins',[AdminControllers::class,'index'])->name('admin.admins')->can('read_admins'); 
-        //     Route::get('/admin/create', [AdminControllers::class,'create'])->name('admin.admins.create')->can('create_admins'); 
-        //     Route::post('/admin', [AdminControllers::class,'store'])->name('admin.admins.store')->can('create_admins');
-        //     Route::get('/admin/{admin}/edit', [AdminControllers::class, 'edit'])->name('admin.admins.edit')->can('update_admins');
-        //     Route::put('/admin/{admin}', [AdminControllers::class, 'update'])->name('admin.admins.update')->can('update_admins');
-        //     Route::delete('/admin/{admin}', [AdminControllers::class, 'destroy'])->name('admin.admins.destroy')->can('delete_admins'); 
-            
             // Admin task management routes
-            Route::get('/tasks', [TaskController::class, 'index'])->name('admin.tasks')->can('read_tasks');
-            Route::get('/tasks/create', [TaskController::class, 'create'])->name('admin.tasks.create')->can('create_tasks');
-            Route::post('/tasks', [TaskController::class,'store'])->name('admin.tasks.store')->can('create_tasks');
-            Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('admin.tasks.edit')->can('update_tasks');
-            Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('admin.tasks.update')->can('update_tasks');
-            Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('admin.tasks.destroy')->can('delete_tasks');
+            Route::controller(TaskController::class)->prefix('tasks')->group(function(){
+                Route::get('/', 'index')->name('admin.tasks')->can('read_tasks');
+                Route::get('/create', 'create')->name('admin.tasks.create')->can('create_tasks');
+                Route::post('/', 'store')->name('admin.tasks.store')->can('create_tasks');
+                Route::get('/{task}/edit', 'edit')->name('admin.tasks.edit')->can('update_tasks');
+                Route::put('/{task}', 'update')->name('admin.tasks.update')->can('update_tasks');
+                Route::delete('/{task}', 'destroy')->name('admin.tasks.destroy')->can('delete_tasks');
+            });
             
             Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('admin.tasks.comments.store');
             Route::delete('/tasks/{task}/comments/{comment}', [CommentController::class, 'destroy'])->name('admin.tasks.comments.destroy');

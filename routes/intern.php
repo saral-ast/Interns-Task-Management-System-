@@ -26,6 +26,6 @@ Route::prefix('intern')->group(function () {
         Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('intern.tasks.show');
         Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('intern.tasks.comments.store');
         Route::delete('/tasks/{task}/comments/{comment}', [CommentController::class, 'destroy'])->name('intern.tasks.comments.destroy');
-        // Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('intern.tasks.update');
+ 
     });
 });
