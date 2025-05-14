@@ -19,7 +19,7 @@ class PreloadAdmin
         // Only run if admin is authenticated
         if (Auth::guard('admin')->check()) {
             // Get the admin and eager load role and permissions
-            $admin = Auth::guard('admin')->user();
+            $admin = admin();
             
             // Only load if not already loaded
             if (!$admin->relationLoaded('role')) {
