@@ -11,6 +11,13 @@ class Admin extends Authenticatable
     use HasFactory;
 
     protected $guarded = [];
+    
+    // Property to store loaded permissions
+    protected $permissionsLoaded = false;
+    protected $loadedPermissions = [];
+    
+    // Always eager load these relationships
+    protected $with = ['role'];
 
     public function tasks()
     {
@@ -19,14 +26,12 @@ class Admin extends Authenticatable
 
     public function role()
     { 
-        // Assuming admin has a one-to-many relationship with Role
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class)->withDefault(['id' => 0, 'name' => 'none']);
     }
 
-    // Assuming admin is related to Role through a pivot table 'role_permssions'
+    // Relationship to permissions through role_permssions
     public function rolePermissions()
     { 
-        // Admin now has a many-to-many relationship with Permission through the 'role_permssions' table
         return $this->belongsToMany(Permission::class, 'role_permssions', 'admin_id', 'permission_id')
                     ->withTimestamps();
     }
@@ -34,17 +39,38 @@ class Admin extends Authenticatable
     // Check if Admin has a certain permission
     public function hasPermission($permission)
     { 
+        // Super admin check
         if ($this->isAdmin()) { 
             return true; 
-        } 
-
-        // Check if the admin has the requested permission through the role_permssions table
-        return $this->rolePermissions()->where('permission', $permission)->exists();
+        }
+        
+        // Load all permissions at once if not loaded yet
+        if (!$this->permissionsLoaded) {
+            $this->loadAllPermissions();
+        }
+        
+        // Check if permission exists in the loaded array
+        return in_array($permission, $this->loadedPermissions);
+    }
+    
+    // Load all permissions at once
+    public function loadAllPermissions()
+    {
+        $this->loadedPermissions = $this->rolePermissions()
+            ->pluck('permission')
+            ->toArray();
+        $this->permissionsLoaded = true;
     }
 
-    // Assuming isAdmin checks if this admin is a super admin
+    // Check if Admin is a super admin (id=1)
     public function isAdmin()
     { 
-        return $this->role()->where('id', 1)->exists(); // assuming 1 is the super_admin role_id
+        // Use eager loaded role if available
+        if ($this->relationLoaded('role')) {
+            return $this->role->id === 1;
+        }
+        
+        // Otherwise query the database
+        return $this->role()->where('id', 1)->exists();
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Middleware\PreloadAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -14,7 +15,7 @@ Route::prefix('admin')->group(function () {
                 Route::post('/login',[AdminLoginController::class,'login'])->name('admin.authenticate');
         });
 
-        Route::middleware("auth:admin")->group(function() {
+        Route::middleware(["auth:admin", PreloadAdmin::class])->group(function() {
             Route::post('/logout',[AdminLoginController::class,'logout'])->name('admin.logout');
             Route::get('/', [DashboardController::class,'index'])->name('admin.dashboard');
 

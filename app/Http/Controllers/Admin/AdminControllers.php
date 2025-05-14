@@ -17,9 +17,10 @@
     {
         public function index() {
             try {
-                $admin = Admin::all();
+                // Use eager loading for role
+                $admins = Admin::with('role')->get();
                 return view('admin.admins.index',[
-                    'admins' => $admin
+                    'admins' => $admins
                 ]);
             } catch (Exception $e) {
                 Log::error('Error in admin index: ' . $e->getMessage());
@@ -29,6 +30,7 @@
 
         public function create() {
             try {
+                // Get all permissions at once
                 $permissions = Permission::all();
                 return view('admin.admins.create', [
                     'permissions' => $permissions
@@ -66,11 +68,13 @@
                 if($admin->role->name == 'super_admin') {
                     return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
                 }
+                
+                // Fetch all permissions in a single query
                 $permissions = Permission::all();
-                $adminPermissions = RolePermssion::where('admin_id', $admin->id)
-                    ->pluck('permission_id')
-                    ->toArray();
-                // dd($adminPermissions, $permissions);
+                
+                // Load admin with its role permissions to avoid extra queries
+                $admin->load('rolePermissions');
+                $adminPermissions = $admin->rolePermissions->pluck('id')->toArray();
 
                 return view('admin.admins.edit', [
                     'admin' => $admin,

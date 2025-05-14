@@ -30,6 +30,18 @@ class AdminLoginController extends Controller
             
             if(Auth::guard('admin')->attempt($credentials)){
                 $request->session()->regenerate();
+                
+                // Preload the admin with permissions to avoid additional queries
+                $admin = Auth::guard('admin')->user();
+                $admin->load(['rolePermissions' => function($query) {
+                    $query->select('permissions.id', 'permission');
+                }]);
+                
+                // Preload permissions by calling this method once
+                if (!$admin->permissionsLoaded) {
+                    $admin->loadAllPermissions();
+                }
+                
                 return redirect()->intended(route('admin.dashboard'));
             }
 

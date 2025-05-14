@@ -49,24 +49,49 @@ class User extends Authenticatable
         ];
     }
 
-    public function role() {
-        return $this->belongsTo(Role::class);
+    /**
+     * Default eager loading relationships
+     */
+    protected $with = ['role'];
+
+    /**
+     * Get the role that owns the user
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class)->withDefault(['name' => 'none']);
     }
-    public function tasks() {
+
+    /**
+     * Get tasks created by the user
+     */
+    public function tasks(): HasMany
+    {
         return $this->hasMany(Task::class);
     }
     
+    /**
+     * Get tasks assigned to the user
+     */
     public function assignedTasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class, 'task_users')
                     ->withTimestamps();
     }
 
-    public function isAdmin() {
-        return $this->role === 'admin';
+    /**
+     * Check if user is an admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role->name === 'admin';
     }
 
-    public function isIntern() {
-        return $this->role === 'intern';
+    /**
+     * Check if user is an intern
+     */
+    public function isIntern(): bool
+    {
+        return $this->role->name === 'intern';
     }
 }

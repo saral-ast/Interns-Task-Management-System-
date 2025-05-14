@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Intern;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -13,8 +12,7 @@ class TaskController extends Controller
 {
     public function index() {
         try {
-            $user = Auth::guard('user')->user();
-            $tasks = $user->assignedTasks;
+            $tasks = intern()->assignedTasks;
             return view('intern.tasks.index', [
                 'tasks' => $tasks
             ]);
@@ -27,7 +25,7 @@ class TaskController extends Controller
     public function show(Task $task) {
         try {
             // Ensure the task is assigned to the authenticated user
-            if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
+            if (!$task->assignedUsers->contains(intern()->id)) {
                 return redirect()->back()->with('error', 'You are not authorized to view this task.');
             }
             return view('intern.tasks.show', ['task' => $task]);

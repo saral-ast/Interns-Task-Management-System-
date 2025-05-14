@@ -16,7 +16,7 @@ class TaskController extends Controller
 {
     public function index() {
         try {
-            $tasks = Auth::guard('admin')->user()
+            $tasks = admin()
                 ->tasks()
                 ->with([
                     'assignedUsers',
@@ -48,8 +48,8 @@ class TaskController extends Controller
     public function store(TaskRequest $request) {
         try {
             $validated = $request->validated();
-            $admin = Auth::guard('admin')->user();
-            $validated['created_by'] = $admin->id;
+            $validated['created_by'] = admin()->id;
+            
             DB::beginTransaction();
             $task = Task::create($validated);
             
