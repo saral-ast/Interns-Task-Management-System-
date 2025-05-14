@@ -17,9 +17,9 @@ class MessageController extends Controller
     public function index()
     {
         try {
-            $isAdmin = Auth::guard('admin')->check();
-            $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
-            $userType = $isAdmin ? 'admin' : 'intern';
+            $isAdmin = isAdmin();
+            $user = isAdmin() ? admin() : intern();
+            $userType = isAdmin() ? 'admin' : 'intern';
 
             // Get all admins and interns with eager loading of roles in a single query
             $admins = Admin::with('role')->get();
@@ -85,8 +85,8 @@ class MessageController extends Controller
                 'receiver_id' => 'required|integer'
             ]);
 
-            $sender = Auth::guard('admin')->check() ? Auth::guard('admin')->user() : Auth::guard('user')->user();
-            $senderType = Auth::guard('admin')->check() ? 'admin' : 'intern';
+            $sender = isAdmin() ? admin() : intern();
+            $senderType = isAdmin() ? 'admin' : 'intern';
 
             $message = Message::create([
                 'content' => $request->content,
@@ -109,8 +109,8 @@ class MessageController extends Controller
     public function markAsRead(Message $message)
     {
         try {
-            $user = Auth::guard('admin')->check() ? Auth::guard('admin')->user() : Auth::guard('user')->user();
-            $userType = Auth::guard('admin')->check() ? 'admin' : 'intern';
+            $user = isAdmin() ? admin() : intern();
+            $userType = isAdmin() ? 'admin' : 'intern';
 
             if ($message->receiver_type === $userType && $message->receiver_id === $user->id) {
                 $message->update(['read_at' => now()]);
@@ -156,9 +156,9 @@ class MessageController extends Controller
     public function getUnreadCounts(Request $request)
     {
         try {
-            $isAdmin = Auth::guard('admin')->check();
-            $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
-            $userType = $isAdmin ? 'admin' : 'intern';
+            $isAdmin = isAdmin();
+            $user = isAdmin() ? admin() : intern();
+            $userType = isAdmin() ? 'admin' : 'intern';
             
             $unreadCounts = [];
             
@@ -207,8 +207,8 @@ class MessageController extends Controller
     public function getTotalUnreadCount()
     {
         try {
-            $isAdmin = Auth::guard('admin')->check();
-            $user = $isAdmin ? Auth::guard('admin')->user() : Auth::guard('user')->user();
+            $isAdmin = isAdmin();
+            $user = $isAdmin ? admin() : intern();
             $userType = $isAdmin ? 'admin' : 'intern';
             
             $count = Message::where('receiver_type', $userType)

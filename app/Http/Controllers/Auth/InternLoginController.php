@@ -29,7 +29,7 @@ class InternLoginController extends Controller
             //  dd(Auth::guard('user')->attempt($credentials));
              if(Auth::guard('user')->attempt($credentials)){
                  
-                  $user = Auth::guard('user')->user();
+                  $user = intern();
                 //   dd($user);
                   return redirect()->route('intern.dashboard',[
                       'user' => $user

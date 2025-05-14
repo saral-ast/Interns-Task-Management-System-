@@ -32,7 +32,7 @@ class AdminLoginController extends Controller
                 $request->session()->regenerate();
                 
                 // Preload the admin with permissions to avoid additional queries
-                $admin = Auth::guard('admin')->user();
+                $admin = admin();
                 $admin->load(['rolePermissions' => function($query) {
                     $query->select('permissions.id', 'permission');
                 }]);

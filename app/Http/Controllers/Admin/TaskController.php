@@ -95,18 +95,11 @@ class TaskController extends Controller
             $validated = $request->validated();
             
             // Update task attributes and assigned users in a transaction
-            DB::transaction(function() use ($task, $validated) {
-                // Update task attributes
+            DB::beginTransaction();
+            if($task) {
                 $task->update($validated);
-                
-                // Use syncWithoutDetaching if you only want to add relationships without removing existing ones
-                // Or use sync with the exact array of IDs when you want to add and remove relationships
-                if($task) {
-                    // When we know exactly which users should be attached, sync is more efficient
-                    // than separate attach/detach operations
-                    $task->assignedUsers()->sync($validated['assigned_users'], false);
-                }
-            });
+                $task->assignedUsers()->sync($validated['assigned_users']);
+            }
             
             DB::commit();
             return redirect()->route('admin.tasks')->with('success', 'Task updated successfully.');

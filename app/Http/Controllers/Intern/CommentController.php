@@ -17,7 +17,7 @@ class CommentController extends BaseCommentController
     {
         try {
             // Ensure the task is assigned to the authenticated user
-            if (!$task->assignedUsers->contains(Auth::guard('user')->id())) {
+            if (!$task->assignedUsers->contains(intern()->id)) {
                 return redirect()->back()->with('error', 'You are not authorized to add comments to this task.');
             }
 
@@ -42,7 +42,7 @@ class CommentController extends BaseCommentController
     {
         try {
             // Interns can only delete their own comments
-            if ($comment->user_type !== 'intern' || $comment->user_id !== Auth::guard('user')->id()) {
+            if ($comment->user_type !== 'intern' || $comment->user_id !== intern()->id) {
                 return redirect()->back()->with('error', 'You are not authorized to delete this comment.');
             }
 

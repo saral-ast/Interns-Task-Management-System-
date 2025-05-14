@@ -115,7 +115,7 @@
         {
             try {
                 DB::beginTransaction();
-                RolePermssion::where('admin_id', $admin->id)->delete();
+                $admin->rolePermissions()->detach();
                 $admin->delete();
                 DB::commit();
                 

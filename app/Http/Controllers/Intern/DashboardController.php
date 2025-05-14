@@ -12,7 +12,7 @@ class DashboardController extends Controller
 {
     public function index() {
         try {
-            $user = Auth::guard('user')->user();
+            $user = intern();
             $tasks = $user->assignedTasks()->with(['creator'])->get();
             $latestTasks = $tasks->sortByDesc('created_at')->take(5);
             $activeTasksCount = $tasks->whereIn('status', ['pending', 'in_progress'])->count();

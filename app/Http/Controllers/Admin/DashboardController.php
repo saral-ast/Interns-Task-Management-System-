@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         try {
             // Single query for all tasks with eager loading
-            $allTasks = Auth::guard('admin')->user()->tasks()
+            $allTasks = admin()->tasks()
                 ->with(['assignedUsers', 'creator'])
                 ->get();
             

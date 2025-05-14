@@ -17,3 +17,14 @@ function intern()
 {
     return Auth::guard('user')->user();
 }
+
+
+function isAdmin()
+{
+    return Auth::guard('admin')->check();
+}
+
+function isIntern()
+{
+    return Auth::guard('user')->check();
+}
