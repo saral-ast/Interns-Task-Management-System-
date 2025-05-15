@@ -54,15 +54,11 @@ class Admin extends Authenticatable
         return in_array($permission, $this->loadedPermissions);
     }
     
-    // Load all permissions at once with a more efficient query
+    // Load all permissions at once using the model relationship
     public function loadAllPermissions()
     {
-        // Direct SQL query to fetch permissions more efficiently
-        $permissions = DB::table('permissions')
-            ->join('role_permssions', 'permissions.id', '=', 'role_permssions.permission_id')
-            ->where('role_permssions.admin_id', $this->id)
-            ->pluck('permission')
-            ->toArray();
+        // Use the Eloquent relationship instead of direct DB query
+        $permissions = $this->rolePermissions()->pluck('permission')->toArray();
             
         $this->loadedPermissions = $permissions;
         $this->permissionsLoaded = true;

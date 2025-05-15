@@ -305,16 +305,45 @@
 
     // Function to update notification badge
     function updateNotificationBadge(userType, userId) {
-        // Fetch the current unread count
+        // Just call our unified function that handles this
+        updateUnreadCounts();
+    }
+
+    // Function to start polling for unread messages - only as a fallback
+    function startUnreadMessagePolling() {
+        // We don't need regular polling since we're using Echo for real-time updates
+        // Only perform an initial load of unread counts
+        updateUnreadCounts();
+        
+        // No need for continuous polling if Echo is working
+        if (echoInitialized) {
+            return;
+        }
+        
+        // Only as a fallback if Echo fails, poll every 30 seconds
+        unreadPollInterval = setInterval(function() {
+            updateUnreadCounts();
+        }, 30000); // 30 seconds as fallback
+    }
+    
+    // Separate function to update unread counts
+    function updateUnreadCounts() {
+        // Don't update for the current conversation
         $.ajax({
             url: '/messages/unread-counts',
             method: 'GET',
             success: function(response) {
-                // Update each notification badge
+                // Update each notification badge except current conversation
                 Object.keys(response).forEach(key => {
-                    const count = response[key];
                     const [type, id] = key.split('_');
                     
+                    // Skip current conversation
+                    if (currentReceiverType && currentReceiverId &&
+                        type === currentReceiverType && parseInt(id) === parseInt(currentReceiverId)) {
+                        return;
+                    }
+                    
+                    const count = response[key];
                     let badge = $(`.notification-badge[data-user-type="${type}"][data-user-id="${id}"]`);
                     
                     if (count > 0) {
@@ -336,58 +365,11 @@
                         badge.remove();
                     }
                 });
+                
+                // Also update the global chat badge
+                updateChatNavigationBadge();
             }
         });
-    }
-
-    // Function to start polling for unread messages
-    function startUnreadMessagePolling() {
-        // Clear any existing interval
-        stopUnreadMessagePolling();
-        
-        // Poll every 10 seconds
-        unreadPollInterval = setInterval(function() {
-            // Don't update for the current conversation
-            if (currentReceiverType && currentReceiverId) {
-                $.ajax({
-                    url: '/messages/unread-counts',
-                    method: 'GET',
-                    success: function(response) {
-                        // Update each notification badge except current conversation
-                        Object.keys(response).forEach(key => {
-                            const [type, id] = key.split('_');
-                            
-                            // Skip current conversation
-                            if (type === currentReceiverType && parseInt(id) === parseInt(currentReceiverId)) {
-                                return;
-                            }
-                            
-                            const count = response[key];
-                            let badge = $(`.notification-badge[data-user-type="${type}"][data-user-id="${id}"]`);
-                            
-                            if (count > 0) {
-                                if (badge.length) {
-                                    // Update existing badge
-                                    badge.text(count);
-                                } else {
-                                    // Create new badge
-                                    const newBadge = $('<span>')
-                                        .addClass('absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge')
-                                        .attr('data-user-type', type)
-                                        .attr('data-user-id', id)
-                                        .text(count);
-                                        
-                                    $(`.user-select[data-user-type="${type}"][data-user-id="${id}"] .inline-flex`).append(newBadge);
-                                }
-                            } else if (badge.length) {
-                                // Remove badge if count is 0
-                                badge.remove();
-                            }
-                        });
-                    }
-                });
-            }
-        }, 10000); // 10 seconds
     }
 
     // Function to stop polling
@@ -490,6 +472,11 @@
             },
             success: function(response) {
                 // Message sent successfully
+                
+                // If Echo/WebSockets fails, this is a fallback to ensure counts are updated
+                setTimeout(function() {
+                    updateUnreadCounts();
+                }, 1000);
             },
             error: function(xhr) {
                 // Show error message to user

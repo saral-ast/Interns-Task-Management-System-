@@ -21,11 +21,14 @@ class PreloadAdmin
             // Get the admin and eager load role and permissions
             $admin = admin();
             
-            // Only load if not already loaded
+            // Load role if not already loaded
             if (!$admin->relationLoaded('role')) {
-                $admin->load(['role', 'rolePermissions' => function($query) {
-                    $query->select('permissions.id', 'permission');
-                }]);
+                $admin->load('role');
+            }
+            
+            // Load permissions using the model method
+            if (!$admin->permissionsLoaded) {
+                $admin->loadAllPermissions();
             }
         }
         

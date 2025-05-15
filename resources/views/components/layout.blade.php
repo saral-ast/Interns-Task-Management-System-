@@ -62,8 +62,22 @@
             // Update the chat unread count when the page loads
             updateChatUnreadCount();
             
-            // Update the chat unread count every 10 seconds
-            setInterval(updateChatUnreadCount, 10000);
+                // Echo listener for updating the chat badge when a new message arrives
+    if (window.Echo) {
+        const userType = '{{ auth()->guard("admin")->check() ? "admin" : "intern" }}';
+        const userId = {{ auth()->guard("admin")->check() ? auth()->guard("admin")->id() : auth()->guard("user")->id() }};
+        
+        window.Echo.private(`chat.${userType}.${userId}`)
+            .listen('MessageSent', (data) => {
+                // If message is for this user, update the count
+                if (data.message.receiver_type === userType && parseInt(data.message.receiver_id) === userId) {
+                    updateChatUnreadCount();
+                }
+            });
+    } else {
+        // Fallback to polling every 30 seconds if Echo doesn't work
+        setInterval(updateChatUnreadCount, 30000);
+    }
             
             // Also update when the page becomes visible again
             document.addEventListener('visibilitychange', function() {

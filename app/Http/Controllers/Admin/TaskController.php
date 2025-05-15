@@ -17,7 +17,7 @@ class TaskController extends Controller
     public function index() {
         try {
             $tasks = Task::with(['assignedUsers', 'creator'])
-                    ->when(!isSuperAdmin(), fn ($q) => $q->where('creator_id', admin()->id))
+                    ->when(!isSuperAdmin(), fn ($q) => $q->where('created_by', admin()->id))
                     ->get();
 
                 
