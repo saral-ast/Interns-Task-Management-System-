@@ -28,3 +28,8 @@ function isIntern()
 {
     return Auth::guard('user')->check();
 }
+
+function isSuperAdmin()
+{
+    return admin()->role->name == 'super_admin';
+}

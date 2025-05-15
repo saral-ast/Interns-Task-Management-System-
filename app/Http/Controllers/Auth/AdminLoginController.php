@@ -33,6 +33,7 @@ class AdminLoginController extends Controller
                 
                 // Preload the admin with permissions to avoid additional queries
                 $admin = admin();
+                // dd($admin);
                 $admin->load(['rolePermissions' => function($query) {
                     $query->select('permissions.id', 'permission');
                 }]);
@@ -42,7 +43,7 @@ class AdminLoginController extends Controller
                     $admin->loadAllPermissions();
                 }
                 
-                return redirect()->intended(route('admin.dashboard'));
+                return redirect()->route('admin.dashboard');
             }
 
             return back()

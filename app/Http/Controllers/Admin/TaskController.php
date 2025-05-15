@@ -16,13 +16,10 @@ class TaskController extends Controller
 {
     public function index() {
         try {
-            $tasks = admin()
-                ->tasks()
-                ->with([
-                    'assignedUsers',
-                    'creator'
-                ])
-                ->get();
+            $tasks = Task::with(['assignedUsers', 'creator'])
+                    ->when(!isSuperAdmin(), fn ($q) => $q->where('creator_id', admin()->id))
+                    ->get();
+
                 
             return view('admin.tasks.index',[
                 'tasks' => $tasks
