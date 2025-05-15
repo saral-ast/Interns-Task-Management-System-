@@ -84,6 +84,22 @@
                     });
             }
         });
+
+        $(document).ready(function() {
+            @if(session('success'))
+                Toast.fire({
+                    icon: 'success',
+                    title: '{{ session('success') }}'
+                });
+            @endif
+
+            @if(session('error'))
+                Toast.fire({
+                    icon: 'error',
+                    title: '{{ session('error') }}'
+                });
+            @endif
+        });
     </script>
 
     <!-- ✅ Your custom scripts -->

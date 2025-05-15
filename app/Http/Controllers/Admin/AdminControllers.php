@@ -1,135 +1,137 @@
 <?php
 
-    namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin;
 
-    use App\Http\Controllers\Controller;
-    use App\Http\Requests\Admin\AdminRequest;
-    use App\Models\Admin;
-    use App\Models\Permission;
-    use App\Models\RolePermssion;
-    use Illuminate\Support\Facades\Auth;
-    use Exception;
-    use Illuminate\Support\Facades\Log;
-    use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminRequest;
+use App\Models\Admin;
+use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
-
-    class AdminControllers extends Controller
+class AdminControllers extends Controller
+{
+    public function index()
     {
-        public function index() {
-            try {
-                // Use eager loading for role
-                $admins = Admin::with('role')->get();
-                return view('admin.admins.index',[
-                    'admins' => $admins
-                ]);
-            } catch (Exception $e) {
-                Log::error('Error in admin index: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'An error occurred while loading administrators. Please try again.');
-            }
-        }
+        try {
+            // Eager load only necessary fields
+            $admins = Admin::with('role:id,name')->get();
 
-        public function create() {
-            try {
-                // Get all permissions at once
-                $permissions = Permission::all();
-                return view('admin.admins.create', [
-                    'permissions' => $permissions
-                ]);
-            } catch (Exception $e) {
-                Log::error('Error in admin create view: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'An error occurred while loading the create form. Please try again.');
-            }
-        }
-
-        public function store(AdminRequest $request) { 
-            try {
-                $credentials = $request->validated();
-                $credentials['password'] =bcrypt($credentials['password']);
-                $credentials['role_id'] = 2;
-                DB::beginTransaction();
-                $admin = Admin::create($credentials);
-
-                // Get all permissions and create role permission entries
-                $admin->rolePermissions()->attach($request->permissions);
-                DB::commit();
-                
-
-                return redirect()->route('admin.admins')->with('success', 'Administrator created successfully with all permissions.');
-            } catch (Exception $e) {
-                Log::error('Error creating admin: ' . $e->getMessage());
-                DB::rollBack();
-                return redirect()->back()->with('error', 'An error occurred while creating the administrator. Please try again.')
-                    ->withInput($request->except('password'));
-            }
-        }
-
-        public function edit(Admin $admin) {
-            try {
-                if($admin->role->name == 'super_admin') {
-                    return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
-                }
-                
-                // Fetch all permissions in a single query
-                $permissions = Permission::all();
-                
-                // Load admin with its role permissions to avoid extra queries
-                $admin->load('rolePermissions');
-                $adminPermissions = $admin->rolePermissions->pluck('id')->toArray();
-
-                return view('admin.admins.edit', [
-                    'admin' => $admin,
-                    'permissions' => $permissions,
-                    'adminPermissions' => $adminPermissions
-                ]);
-            } catch (Exception $e) {
-                Log::error('Error in admin edit view: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'An error occurred while loading the edit form. Please try again.');
-            }
-        }
-
-        public function update(AdminRequest $request, Admin $admin) {
-            try {
-                $credentials = $request->validated();
-                
-                DB::beginTransaction();
-                if($request->password) {
-                    $credentials['password'] = bcrypt($request->password);
-                }
-                
-                $admin->update($credentials);
-                
-                // Update permissions
-                $admin->rolePermissions()->detach();
-                $admin->rolePermissions()->attach($request->permissions);
-                DB::commit();
-                return redirect()->route('admin.admins')->with('success', 'Administrator updated successfully with selected permissions.');
-            } catch (Exception $e) {
-                Log::error('Error updating admin: ' . $e->getMessage());
-                DB::rollBack();
-                return redirect()->back()->with('error', 'An error occurred while updating the administrator. Please try again.')
-                    ->withInput($request->except('password'));
-            }
-        }
-
-        public function destroy(Admin $admin)
-        {
-            try {
-                DB::beginTransaction();
-                $admin->rolePermissions()->detach();
-                $admin->delete();
-                DB::commit();
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Administrator deleted successfully'
-                ]);
-            } catch (Exception $e) {
-                Log::error('Error deleting admin: ' . $e->getMessage());
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while deleting the administrator'
-                ], 500);
-            }
+            return view('admin.admins.index', compact('admins'));
+        } catch (Exception $e) {
+            Log::error('Error in admin index: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load administrators.');
         }
     }
+
+    public function create()
+    {
+        try {
+         
+            $permissions = Permission::select('id', 'permission')->get();
+           
+
+            return view('admin.admins.create', compact('permissions'));
+        } catch (Exception $e) {
+            Log::error('Error in admin create view: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load create form.');
+        }
+    }
+
+    public function store(AdminRequest $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $data = $request->validated();
+            $data['password'] = bcrypt($data['password']);
+            $data['role_id'] = 2; // Default role
+
+            $admin = Admin::create($data);
+            $admin->rolePermissions()->sync($request->permissions); // Use sync instead of attach for better idempotency
+
+            DB::commit();
+
+            return redirect()->route('admin.admins')->with('success', 'Administrator created successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating admin: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to create administrator.')->withInput($request->except('password'));
+        }
+    }
+
+    public function edit(Admin $admin)
+    {
+        try {
+           
+            if (isSuperAdmin()) {
+                
+                return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
+            }
+
+            $permissions = Permission::select('id', 'permission')->get();
+            $admin->load('rolePermissions:id,permission'); // Only necessary columns
+            $adminPermissions = $admin->rolePermissions->pluck('id')->toArray();
+
+            return view('admin.admins.edit', compact('admin', 'permissions', 'adminPermissions'));
+        } catch (Exception $e) {
+            Log::error('Error in admin edit view: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load edit form.');
+        }
+    }
+
+    public function update(AdminRequest $request, Admin $admin)
+    {
+        DB::beginTransaction();
+
+        try {
+            $data = $request->validated();
+
+            if (!empty($request->password)) {
+                $data['password'] = bcrypt($request->password);
+            } 
+            if (isSuperAdmin()) {
+                return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
+            }
+
+            $admin->update($data);
+            $admin->rolePermissions()->sync($request->permissions);
+
+            DB::commit();
+
+            return redirect()->route('admin.admins')->with('success', 'Administrator updated successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating admin: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to update administrator.')->withInput($request->except('password'));
+        }
+    }
+
+    public function destroy(Admin $admin)
+    {
+        DB::beginTransaction();
+
+        try {
+            $admin->rolePermissions()->detach();
+            $admin->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Administrator deleted successfully'
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting admin: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete administrator'
+            ], 500);
+        }
+    }
+}
