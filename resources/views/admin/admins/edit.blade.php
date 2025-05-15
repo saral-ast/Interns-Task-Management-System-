@@ -1,5 +1,9 @@
 <x-layout>
     <x-navigation>
+        @php
+            $disablePermissions = admin()->id === $admin->id;
+        @endphp
+
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
@@ -45,6 +49,7 @@
                                     id="select_all_permissions"
                                     label="Select All Permissions"
                                     :checked="count($permissions) === count($adminPermissions)"
+                                    :disabled="$disablePermissions"
                                 />
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -56,6 +61,7 @@
                                             label="{{ ucwords(str_replace('_', ' ', $permission->permission)) }}"
                                             :checked="in_array($permission->id, old('permissions', $adminPermissions))"
                                             class="permission-checkbox"
+                                            :disabled="$disablePermissions"
                                         />
                                     @endforeach
                                 </div>
@@ -135,13 +141,19 @@
         });
        
             $('#select_all_permissions').on('change', function () {
+                if ($(this).is(':disabled')) return;
+
                 const checked = $(this).is(':checked');
-                $('.permission-checkbox').prop('checked', checked);
+                $('.permission-checkbox:not(:disabled)').prop('checked', checked);
             });
 
             $('.permission-checkbox').on('change', function () {
-                const allChecked = $('.permission-checkbox').length === $('.permission-checkbox:checked').length;
-                $('#select_all_permissions').prop('checked', allChecked);
+                if ($(this).is(':disabled')) return;
+
+                const total = $('.permission-checkbox:not(:disabled)').length;
+                const checked = $('.permission-checkbox:checked:not(:disabled)').length;
+
+                $('#select_all_permissions').prop('checked', total === checked);
             });
         });
     </script>

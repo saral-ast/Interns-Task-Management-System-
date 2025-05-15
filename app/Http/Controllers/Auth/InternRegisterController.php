@@ -26,14 +26,8 @@ class InternRegisterController extends Controller
     {
         try {
             $data = $request->validated();
-            
-            // Create the user
-            // dd($data);
             $data['role_id'] = 2;
-            // dd($data);
             $user = User::create($data);
-            // dd('sdf');
-            // Log the user in
             Auth::guard('user')->login($user);
             
             return redirect()->route('intern.dashboard');

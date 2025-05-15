@@ -45,7 +45,7 @@ class AdminControllers extends Controller
 
         try {
             $data = $request->validated();
-            $data['password'] = bcrypt($data['password']);
+            // $data['password'] = bcrypt($data['password']);
             $data['role_id'] = 2; // Default role
 
             $admin = Admin::create($data);
@@ -66,8 +66,7 @@ class AdminControllers extends Controller
     {
         try {
            
-            if (isSuperAdmin()) {
-                
+            if (isSuperAdmin()) { 
                 return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
             }
 
@@ -87,17 +86,17 @@ class AdminControllers extends Controller
         DB::beginTransaction();
 
         try {
-            $data = $request->validated();
-
-            if (!empty($request->password)) {
-                $data['password'] = bcrypt($request->password);
-            } 
+            $data = $request->validated(); 
             if (isSuperAdmin()) {
                 return redirect()->route('admin.admins')->with('error', 'Super Admin cannot be edited.');
             }
 
             $admin->update($data);
-            $admin->rolePermissions()->sync($request->permissions);
+            
+            // Only update permissions if the admin is not editing themselves
+            if(admin()->id != $admin->id) {
+                $admin->rolePermissions()->sync($request->permissions);
+            }
 
             DB::commit();
 

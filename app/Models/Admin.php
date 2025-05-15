@@ -16,6 +16,17 @@ class Admin extends Authenticatable
     // Property to store loaded permissions
     protected $permissionsLoaded = false;
     protected $loadedPermissions = [];
+
+     protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
+
+    public function hidden(){
+        return ['password'];
+    }
     
     // Eager load role by default
     protected $with = ['role'];

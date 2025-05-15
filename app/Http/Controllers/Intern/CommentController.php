@@ -26,7 +26,7 @@ class CommentController extends BaseCommentController
             $this->createComment(
                 $task,
                 'intern',
-                Auth::guard('user')->id(),
+                intern()->id,
                 $validated['comment']
             );
 
